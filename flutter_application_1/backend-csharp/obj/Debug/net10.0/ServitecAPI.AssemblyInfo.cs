@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ServitecAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f96dfb425b8dfa68a35524753d6ccd57de29596")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+241957d6f62dda8a1e2d8b1c18ea969ade200083")]
 [assembly: System.Reflection.AssemblyProductAttribute("ServitecAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ServitecAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
