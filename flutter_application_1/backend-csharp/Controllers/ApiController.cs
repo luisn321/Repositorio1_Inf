@@ -574,165 +574,158 @@ namespace ServitecAPI.Controllers
         }
     }
 
-    [ApiController]
-    [Route("api/payments")]
-    public class PaymentsController : ControllerBase
-    {
-        private readonly DatabaseService _db;
+    // REFACTORING: PaymentsController moved to Controllers/PaymentController.cs
+    // [ApiController]
+    // [Route("api/payments")]
+    // public class PaymentsController : ControllerBase
+    // {
+    //     private readonly DatabaseService _db;
 
-        public PaymentsController(DatabaseService db)
-        {
-            _db = db;
-        }
+    //     public PaymentsController(DatabaseService db)
+    //     {
+    //         _db = db;
+    //     }
 
-        [HttpPost]
-        public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequest req)
-        {
-            try
-            {
-                // Usar valores que vengan en camelCase o PascalCase
-                var contractionId = req.ContractionId > 0 ? req.ContractionId : req.IdContratacion;
-                var amount = req.Amount > 0 ? req.Amount : req.Monto;
-                var method = !string.IsNullOrEmpty(req.PaymentMethod) ? req.PaymentMethod : req.MetodoPago;
+    //     [HttpPost]
+    //     public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequest req)
+    //     {
+    //         try
+    //         {
+    //             var contractionId = req.ContractionId > 0 ? req.ContractionId : req.IdContratacion;
+    //             var amount = req.Amount > 0 ? req.Amount : req.Monto;
+    //             var method = !string.IsNullOrEmpty(req.PaymentMethod) ? req.PaymentMethod : req.MetodoPago;
 
-                Console.WriteLine($"CreatePayment - IdContraction: {contractionId}, Amount: {amount}, Method: {method}");
+    //             Console.WriteLine($"CreatePayment - IdContraction: {contractionId}, Amount: {amount}, Method: {method}");
 
-                // Validar que la contratación existe
-                var contractionExists = await _db.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(*) FROM contrataciones WHERE id_contratacion = @id",
-                    new Dictionary<string, object> { { "id", contractionId } }
-                );
+    //             var contractionExists = await _db.ExecuteScalarAsync<int>(
+    //                 "SELECT COUNT(*) FROM contrataciones WHERE id_contratacion = @id",
+    //                 new Dictionary<string, object> { { "id", contractionId } }
+    //             );
 
-                if (contractionExists == 0)
-                {
-                    Console.WriteLine($"Contraction not found: {contractionId}");
-                    return NotFound(new { error = "Contraction not found" });
-                }
+    //             if (contractionExists == 0)
+    //             {
+    //                 Console.WriteLine($"Contraction not found: {contractionId}");
+    //                 return NotFound(new { error = "Contraction not found" });
+    //             }
 
-                var query = @"
-                    INSERT INTO pagos (id_contratacion, monto, metodo_pago, fecha_pago, estado_pago)
-                    VALUES (@contractation, @amount, @method, NOW(), 'Completado');
-                    SELECT LAST_INSERT_ID();
-                ";
+    //             var query = @"
+    //                 INSERT INTO pagos (id_contratacion, monto, metodo_pago, fecha_pago, estado_pago)
+    //                 VALUES (@contractation, @amount, @method, NOW(), 'Completado');
+    //                 SELECT LAST_INSERT_ID();
+    //             ";
 
-                var parameters = new Dictionary<string, object>
-                {
-                    { "contractation", contractionId },
-                    { "amount", amount },
-                    { "method", method }
-                };
+    //             var parameters = new Dictionary<string, object>
+    //             {
+    //                 { "contractation", contractionId },
+    //                 { "amount", amount },
+    //                 { "method", method }
+    //             };
 
-                var id = await _db.ExecuteScalarAsync<int>(query, parameters);
-                Console.WriteLine($"✅ Payment created - ID: {id}");
-                return CreatedAtAction(nameof(CreatePayment), new { id_pago = id });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in CreatePayment: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-    }
+    //             var id = await _db.ExecuteScalarAsync<int>(query, parameters);
+    //             Console.WriteLine($"✅ Payment created - ID: {id}");
+    //             return CreatedAtAction(nameof(CreatePayment), new { id_pago = id });
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             Console.WriteLine($"Error in CreatePayment: {ex.Message}");
+    //             Console.WriteLine($"StackTrace: {ex.StackTrace}");
+    //             return StatusCode(500, new { error = ex.Message });
+    //         }
+    //     }
+    // }
 
-    [ApiController]
-    [Route("api/ratings")]
-    public class RatingsController : ControllerBase
-    {
-        private readonly DatabaseService _db;
+    // REFACTORING: RatingsController moved to Controllers/ (in future refactoring)
+    // [ApiController]
+    // [Route("api/ratings")]
+    // public class RatingsController : ControllerBase
+    // {
+    //     private readonly DatabaseService _db;
 
-        public RatingsController(DatabaseService db)
-        {
-            _db = db;
-        }
+    //     public RatingsController(DatabaseService db)
+    //     {
+    //         _db = db;
+    //     }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateRating([FromBody] CreateRatingRequest req)
-        {
-            try
-            {
-                // Usar valores que vengan en camelCase o PascalCase
-                var contractionId = req.ContractionId > 0 ? req.ContractionId : req.IdContratacion;
-                var technicianId = req.TechnicianId > 0 ? req.TechnicianId : req.IdTecnico;
-                var score = req.Score > 0 ? req.Score : req.Puntuacion;
-                var comment = !string.IsNullOrEmpty(req.Comment) ? req.Comment : req.Comentario;
+    //     [HttpPost]
+    //     public async Task<IActionResult> CreateRating([FromBody] CreateRatingRequest req)
+    //     {
+    //         try
+    //         {
+    //             var contractionId = req.ContractionId > 0 ? req.ContractionId : req.IdContratacion;
+    //             var technicianId = req.TechnicianId > 0 ? req.TechnicianId : req.IdTecnico;
+    //             var score = req.Score > 0 ? req.Score : req.Puntuacion;
+    //             var comment = !string.IsNullOrEmpty(req.Comment) ? req.Comment : req.Comentario;
 
-                Console.WriteLine($"⭐ CreateRating - IdContraction: {contractionId}, IdTech: {technicianId}, Score: {score}");
+    //             Console.WriteLine($"⭐ CreateRating - IdContraction: {contractionId}, IdTech: {technicianId}, Score: {score}");
 
-                // Validations: contraction exists, belongs to technician, and isn't already rated
-                var contraction = await _db.ExecuteQueryAsync(
-                    "SELECT id_contratacion, id_tecnico, estado FROM contrataciones WHERE id_contratacion = @id",
-                    new Dictionary<string, object> { { "id", contractionId } }
-                );
+    //             var contraction = await _db.ExecuteQueryAsync(
+    //                 "SELECT id_contratacion, id_tecnico, estado FROM contrataciones WHERE id_contratacion = @id",
+    //                 new Dictionary<string, object> { { "id", contractionId } }
+    //             );
 
-                if (contraction.Count == 0)
-                {
-                    Console.WriteLine($"Contraction not found: {contractionId}");
-                    return BadRequest(new { error = "Contraction not found" });
-                }
+    //             if (contraction.Count == 0)
+    //             {
+    //                 Console.WriteLine($"Contraction not found: {contractionId}");
+    //                 return BadRequest(new { error = "Contraction not found" });
+    //             }
 
-                var row = contraction[0];
-                var technicianInContraction = Convert.ToInt32(row["id_tecnico"]);
-                var status = row.ContainsKey("estado") ? row["estado"]?.ToString() ?? "" : "";
+    //             var row = contraction[0];
+    //             var technicianInContraction = Convert.ToInt32(row["id_tecnico"]);
+    //             var status = row.ContainsKey("estado") ? row["estado"]?.ToString() ?? "" : "";
 
-                if (technicianInContraction != technicianId)
-                {
-                    Console.WriteLine($"Technician mismatch: {technicianId} != {technicianInContraction}");
-                    return BadRequest(new { error = "Technician does not match the contraction" });
-                }
+    //             if (technicianInContraction != technicianId)
+    //             {
+    //                 Console.WriteLine($"Technician mismatch: {technicianId} != {technicianInContraction}");
+    //                 return BadRequest(new { error = "Technician does not match the contraction" });
+    //             }
 
-                // Check if this contraction is already rated
-                var existing = await _db.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(*) FROM calificaciones WHERE id_contratacion = @id",
-                    new Dictionary<string, object> { { "id", contractionId } }
-                );
+    //             var existing = await _db.ExecuteScalarAsync<int>(
+    //                 "SELECT COUNT(*) FROM calificaciones WHERE id_contratacion = @id",
+    //                 new Dictionary<string, object> { { "id", contractionId } }
+    //             );
 
-                if (existing > 0)
-                {
-                    Console.WriteLine($"Already rated: {contractionId}");
-                    return BadRequest(new { error = "This contraction has already been rated" });
-                }
+    //             if (existing > 0)
+    //             {
+    //                 Console.WriteLine($"Already rated: {contractionId}");
+    //                 return BadRequest(new { error = "This contraction has already been rated" });
+    //             }
 
-                // Allow rating without status restriction (client decides when to evaluate)
-                // Only check that contraction exists and isn't duplicated
+    //             var query = @"
+    //                 INSERT INTO calificaciones (id_contratacion, id_tecnico, puntuacion, comentario)
+    //                 VALUES (@contractation, @tech, @score, @comment);
+    //                 SELECT LAST_INSERT_ID();
+    //             ";
 
-                var query = @"
-                    INSERT INTO calificaciones (id_contratacion, id_tecnico, puntuacion, comentario)
-                    VALUES (@contractation, @tech, @score, @comment);
-                    SELECT LAST_INSERT_ID();
-                ";
+    //             var parameters = new Dictionary<string, object>
+    //             {
+    //                 { "contractation", contractionId },
+    //                 { "tech", technicianId },
+    //                 { "score", score },
+    //                 { "comment", comment ?? "" }
+    //             };
 
-                var parameters = new Dictionary<string, object>
-                {
-                    { "contractation", contractionId },
-                    { "tech", technicianId },
-                    { "score", score },
-                    { "comment", comment ?? "" }
-                };
+    //             var id = await _db.ExecuteScalarAsync<int>(query, parameters);
+    //             Console.WriteLine($"Rating created - ID: {id}");
 
-                var id = await _db.ExecuteScalarAsync<int>(query, parameters);
-                Console.WriteLine($"Rating created - ID: {id}");
+    //             await _db.ExecuteNonQueryAsync(
+    //                 @"UPDATE tecnicos SET calificacion_promedio = (
+    //                     SELECT AVG(puntuacion) FROM calificaciones WHERE id_tecnico = @tech
+    //                   ), num_calificaciones = (
+    //                     SELECT COUNT(*) FROM calificaciones WHERE id_tecnico = @tech
+    //                   ) WHERE id_tecnico = @tech",
+    //                 new Dictionary<string, object> { { "tech", technicianId } }
+    //             );
 
-                // Update technician's average rating
-                await _db.ExecuteNonQueryAsync(
-                    @"UPDATE tecnicos SET calificacion_promedio = (
-                        SELECT AVG(puntuacion) FROM calificaciones WHERE id_tecnico = @tech
-                      ), num_calificaciones = (
-                        SELECT COUNT(*) FROM calificaciones WHERE id_tecnico = @tech
-                      ) WHERE id_tecnico = @tech",
-                    new Dictionary<string, object> { { "tech", technicianId } }
-                );
-
-                return Ok(new { id_calificacion = id });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in CreateRating: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-    }
+    //             return Ok(new { id_calificacion = id });
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             Console.WriteLine($"Error in CreateRating: {ex.Message}");
+    //             Console.WriteLine($"StackTrace: {ex.StackTrace}");
+    //             return StatusCode(500, new { error = ex.Message });
+    //         }
+    //     }
+    // }
 
     public class CreateContractionRequest
     {
@@ -748,27 +741,29 @@ namespace ServitecAPI.Controllers
         public string Status { get; set; } = "";
     }
 
-    public class CreatePaymentRequest
-    {
-        public int ContractionId { get; set; }
-        public int IdContratacion { get; set; } // Para compatibilidad con camelCase
-        public double Amount { get; set; }
-        public double Monto { get; set; } // Para compatibilidad
-        public string PaymentMethod { get; set; } = "";
-        public string MetodoPago { get; set; } = ""; // Para compatibilidad
-    }
+    // REFACTORING: CreatePaymentRequest moved to DTOs/PaymentDTOs.cs
+    // public class CreatePaymentRequest
+    // {
+    //     public int ContractionId { get; set; }
+    //     public int IdContratacion { get; set; }
+    //     public double Amount { get; set; }
+    //     public double Monto { get; set; }
+    //     public string PaymentMethod { get; set; } = "";
+    //     public string MetodoPago { get; set; } = "";
+    // }
 
-    public class CreateRatingRequest
-    {
-        public int ContractionId { get; set; }
-        public int IdContratacion { get; set; } // Para compatibilidad con camelCase
-        public int TechnicianId { get; set; }
-        public int IdTecnico { get; set; } // Para compatibilidad
-        public int Score { get; set; }
-        public int Puntuacion { get; set; } // Para compatibilidad
-        public string? Comment { get; set; }
-        public string? Comentario { get; set; } // Para compatibilidad
-    }
+    // REFACTORING: CreateRatingRequest moved to DTOs/ (in future refactoring)
+    // public class CreateRatingRequest
+    // {
+    //     public int ContractionId { get; set; }
+    //     public int IdContratacion { get; set; }
+    //     public int TechnicianId { get; set; }
+    //     public int IdTecnico { get; set; }
+    //     public int Score { get; set; }
+    //     public int Puntuacion { get; set; }
+    //     public string? Comment { get; set; }
+    //     public string? Comentario { get; set; }
+    // }
 
     public class UpdateClientRequest
     {

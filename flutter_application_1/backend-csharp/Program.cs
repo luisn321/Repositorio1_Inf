@@ -21,10 +21,12 @@ builder.Services.AddScoped<DatabaseService>();
 // Registrar Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITechnicianRepository, TechnicianRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 // Registrar Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITechnicianService, TechnicianService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
