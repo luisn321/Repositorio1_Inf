@@ -135,8 +135,11 @@ namespace ServitecAPI.Services
             try
             {
                 // Validaciones
-                if (string.IsNullOrWhiteSpace(request.Name))
-                    throw new InvalidOperationException("Name is required");
+                if (string.IsNullOrWhiteSpace(request.FirstName))  // ✨ CAMBIO: de Name a FirstName
+                    throw new InvalidOperationException("First name is required");
+
+                if (string.IsNullOrWhiteSpace(request.LastName))  // ✨ NUEVO: Validar lastName
+                    throw new InvalidOperationException("Last name is required");
 
                 if (!EmailValidator.IsValid(request.Email))
                     throw new InvalidOperationException("Invalid email format");
@@ -157,7 +160,8 @@ namespace ServitecAPI.Services
                 // Crear usuario
                 var user = new UserModel
                 {
-                    Nombre = request.Name,
+                    Nombre = request.FirstName,           // ✨ CAMBIO
+                    Apellido = request.LastName,          // ✨ NUEVO
                     Email = request.Email,
                     Contrasena = _db.HashPassword(request.Password),
                     Telefono = request.Phone,
@@ -181,7 +185,7 @@ namespace ServitecAPI.Services
                     UserType = "technician",
                     UserId = techId,
                     IdUser = techId,
-                    Name = request.Name,
+                    Name = request.FirstName,              // ✨ CAMBIO
                     Email = request.Email,
                     Latitude = request.Latitude,
                     Longitude = request.Longitude
