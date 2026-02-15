@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'TechnicianListScreen.dart';
+import 'TechniciansByServiceScreen.dart';
+import '../config/app_icons.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final String serviceName;
   final IconData serviceIcon;
+  final int serviceId;
+  final int clientId;
 
   static const Color darkGreen = Color(0xFF0F6B44);
   static const Color midGreen = Color(0xFF2DBE7F);
@@ -14,6 +17,8 @@ class ServiceDetailScreen extends StatelessWidget {
     super.key,
     required this.serviceName,
     required this.serviceIcon,
+    this.serviceId = 0,
+    this.clientId = 0,
   });
 
   @override
@@ -37,11 +42,29 @@ class ServiceDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Ícono grande
-            CircleAvatar(
-              radius: 55,
-              backgroundColor: lightGreen,
-              child: Icon(serviceIcon, size: 60, color: darkGreen),
+            // Ícono grande (imagen PNG)
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: lightGreen,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: midGreen, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: midGreen.withOpacity(0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Image.asset(
+                  AppIcons.getServiceImagePath(serviceName),
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
 
             const SizedBox(height: 25),
@@ -80,9 +103,10 @@ class ServiceDetailScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => TechnicianListScreen(
+                      builder: (_) => TechniciansByServiceScreen(
+                        serviceId: serviceId,
                         serviceName: serviceName,
-                        
+                        clientId: clientId,
                       ),
                     ),
                   );

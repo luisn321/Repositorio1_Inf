@@ -86,10 +86,10 @@ class RequestDetailScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => PaymentScreen(
-                          service: service,
-                          technician: technician,
-                          date: date,
-                          details: details,
+                          idContratacion: 0,
+                          serviceName: service,
+                          clientName: technician,
+                          monto: 100.0,
                         ),
                       ),
                     );

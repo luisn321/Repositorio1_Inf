@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../services/api.dart';
 
 class RatingScreen extends StatefulWidget {
+  final int idContratacion;
+  final int idTecnico;
   final String technicianName;
   final String serviceName;
 
@@ -11,6 +14,8 @@ class RatingScreen extends StatefulWidget {
 
   const RatingScreen({
     super.key,
+    required this.idContratacion,
+    required this.idTecnico,
     required this.technicianName,
     required this.serviceName,
   });
@@ -22,8 +27,75 @@ class RatingScreen extends StatefulWidget {
 class _RatingScreenState extends State<RatingScreen> {
   int selectedStars = 0;
   final TextEditingController commentController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitRating() async {
+    if (selectedStars == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Selecciona una calificación.")),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final apiService = ApiService();
+      await apiService.createRating(
+        idContratacion: widget.idContratacion,
+        idTecnico: widget.idTecnico,
+        puntuacion: selectedStars,
+        comentario: commentController.text.isEmpty
+            ? 'Sin comentarios'
+            : commentController.text,
+      );
+
+      if (mounted) {
+        // Mostrar diálogo de éxito
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('✅ Éxito'),
+              content: const Text('Gracias por tu reseña. El técnico ha sido calificado.'),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Cierra el diálogo
+                    Navigator.of(context).pop(); // Regresa a la pantalla anterior
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: RatingScreen.darkGreen,
+                  ),
+                  child: const Text('Aceptar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar calificación: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: RatingScreen.white,
@@ -111,27 +183,7 @@ class _RatingScreenState extends State<RatingScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (selectedStars == 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Selecciona una calificación."),
-                      ),
-                    );
-                    return;
-                  }
-
-                  Navigator.pop(context, {
-                    "technician": widget.technicianName,
-                    "service": widget.serviceName,
-                    "rating": selectedStars,
-                    "comment": commentController.text,
-                  });
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Gracias por tu reseña!")),
-                  );
-                },
+                onPressed: _isSubmitting ? null : _submitRating,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: RatingScreen.midGreen,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -139,13 +191,23 @@ class _RatingScreenState extends State<RatingScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text(
-                  "Enviar Reseña",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: RatingScreen.white,
-                  ),
-                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            RatingScreen.white,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        "Enviar Reseña",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: RatingScreen.white,
+                        ),
+                      ),
               ),
             ),
           ],

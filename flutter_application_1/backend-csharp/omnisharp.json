@@ -1,0 +1,16 @@
+{
+  "RoslynExtensionsOptions": {
+    "enableEditorConfigSupport": true,
+    "enableRoslynAnalyzers": true
+  },
+  "msbuild": {
+    "enabled": true
+  },
+  "script": {
+    "enabled": false
+  },
+  "sdk": {
+    "includePrerelease": false,
+    "version": "latest"
+  }
+}

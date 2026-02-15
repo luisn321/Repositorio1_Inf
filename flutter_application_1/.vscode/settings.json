@@ -1,0 +1,7 @@
+{
+  "omnisharp.projectLoadTimeout": 30,
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.enableRoslynAnalyzers": true,
+  "omnisharp.analyzeOpenDocumentsOnly": false,
+  "dotnet.defaultSolution": "flutter_application_1.sln"
+}

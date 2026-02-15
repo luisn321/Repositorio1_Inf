@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'TechnicianDetailScreen.dart';
+import '../config/app_icons.dart';
 class TechnicianListScreen extends StatelessWidget {
   final String serviceName;
 
@@ -19,9 +20,35 @@ class TechnicianListScreen extends StatelessWidget {
       backgroundColor: white,
       appBar: AppBar(
         backgroundColor: darkGreen,
-        title: Text(
-          "Técnicos de $serviceName",
-          style: const TextStyle(color: white, fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            // Imagen del servicio
+            Container(
+              width: 40,
+              height: 40,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: midGreen,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Image.asset(
+                AppIcons.getServiceImagePath(serviceName),
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Título
+            Expanded(
+              child: Text(
+                "Técnicos de $serviceName",
+                style: const TextStyle(
+                  color: white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
 
@@ -155,12 +182,10 @@ class TechnicianListScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => TechnicianDetailScreen(
-                      name: name,
-                      specialty: specialty,
-                      experience: experience,
-                      price: price,
-                      rating: rating,
-                      description: "Profesional dedicado y con amplia experiencia en $specialty. Comprometido con la calidad y satisfacción del cliente.",
+                      technicianId: 0,
+                      clientId: 0,
+                      serviceId: 0,
+                      serviceName: specialty,
                     ),
                   ),
                 );

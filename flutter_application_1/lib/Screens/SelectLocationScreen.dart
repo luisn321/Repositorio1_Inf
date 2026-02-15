@@ -10,7 +10,21 @@ class SelectLocationScreen extends StatefulWidget {
 }
 
 class _SelectLocationScreenState extends State<SelectLocationScreen> {
+  late MapController _mapController;
   LatLng selectedPoint = LatLng(17.6405, -101.5532); // Zihuatanejo, México
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+    print(' FlutterMap inicializado correctamente');
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,22 +38,27 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
           // MAPA
           Expanded(
             child: FlutterMap(
+              mapController: _mapController,
               options: MapOptions(
                 initialCenter: selectedPoint,
-                initialZoom: 14,
-                onPositionChanged: (pos, _) {
+                initialZoom: 14.0,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
+                onPositionChanged: (MapPosition pos, bool hasGesture) {
                   setState(() {
-                    selectedPoint = pos.center!;
+                    selectedPoint = pos.center ?? selectedPoint;
+                    print(' Nueva ubicación: ${selectedPoint.latitude}, ${selectedPoint.longitude}');
                   });
                 },
               ),
               children: [
                 TileLayer(
                   urlTemplate:
-                      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      "https://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png",
                   subdomains: const ['a', 'b', 'c'],
+                  userAgentPackageName: 'com.flutter.app',
                 ),
-
                 // PIN
                 MarkerLayer(
                   markers: [
@@ -58,7 +77,6 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
               ],
             ),
           ),
-
           // Botón Confirmar
           Container(
             width: double.infinity,
@@ -72,6 +90,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                 ),
               ),
               onPressed: () {
+                print(' Ubicación confirmada: ${selectedPoint.latitude}, ${selectedPoint.longitude}');
                 Navigator.pop(context, selectedPoint);
               },
               child: const Text(

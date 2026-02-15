@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Screens/TechnicianHomeScreen.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
+import '../services/api.dart';
 import 'SelectLocationScreen.dart';
+import 'TechnicianServicesScreen.dart';
 
 
 class RegisterTechnicianScreen extends StatefulWidget {
@@ -18,12 +20,142 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
   static const Color lightGreen = Color(0xFFA8E6CF);
   static const Color white = Colors.white;
 
-  // Controlador para dirección
+  // Controladores
+  final TextEditingController nombreController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController telefonoController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
+  final TextEditingController especialidadController = TextEditingController();
+  final TextEditingController experienciaController = TextEditingController();
+  final TextEditingController tarifaController = TextEditingController();
+  final TextEditingController descripcionController = TextEditingController();
 
   // Para guardar internamente la ubicación
   double? latitud;
   double? longitud;
+  List<int> selectedServiceIds = [];
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    nombreController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    telefonoController.dispose();
+    addressController.dispose();
+    especialidadController.dispose();
+    experienciaController.dispose();
+    tarifaController.dispose();
+    descripcionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    // Validaciones
+    if (nombreController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        confirmPasswordController.text.isEmpty ||
+        telefonoController.text.isEmpty ||
+        addressController.text.isEmpty ||
+        tarifaController.text.isEmpty ||
+        descripcionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Por favor completa todos los campos."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Las contraseñas no coinciden."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (latitud == null || longitud == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Por favor selecciona una ubicación en el mapa."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final apiService = ApiService();
+      
+      // Convertir tarifa a double
+      final tarifa = double.tryParse(tarifaController.text) ?? 0.0;
+      
+      final result = await apiService.registerTechnician(
+        nombre: nombreController.text,
+        email: emailController.text,
+        password: passwordController.text,
+        telefono: telefonoController.text,
+        ubicacionText: addressController.text,
+        lat: latitud!,
+        lng: longitud!,
+        tarifaHora: tarifa,
+        serviceIds: selectedServiceIds,
+        experiencia: experienciaController.text,
+        descripcion: descripcionController.text,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("¡Cuenta como técnico creada exitosamente!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Obtener el ID del técnico registrado - El backend retorna 'id_user'
+        final technicianId = result['id_user'] as int?;
+        print('Resultado completo del registro técnico: $result');
+        print('Técnico registrado con ID: $technicianId');
+
+        // Navegar a home sin permitir volver
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TechnicianHomeScreen(technicianId: technicianId ?? 0),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      print('❌ Error en RegisterTechnician: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,14 +180,15 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                        const SizedBox(height: 20),
 
-                  Text(
+                        // BOTÓN PARA ABRIR EL MAPA
+                  const Text(
                     "Regístrate como técnico y ofrece tus servicios a clientes.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: white.withOpacity(0.85),
+                      color: white,
                     ),
                   ),
 
@@ -79,19 +212,15 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                       children: [
                         _buildInputField(
                           icon: Icons.person_outline,
-                          hint: "Nombres",
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildInputField(
-                          icon: Icons.person_outline,
-                          hint: "Apellidos",
+                          hint: "Nombre",
+                          controller: nombreController,
                         ),
                         const SizedBox(height: 16),
 
                         _buildInputField(
                           icon: Icons.email_outlined,
                           hint: "Correo electrónico",
+                          controller: emailController,
                         ),
                         const SizedBox(height: 16),
 
@@ -99,10 +228,10 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                           icon: Icons.phone_outlined,
                           hint: "Teléfono",
                           keyboard: TextInputType.phone,
+                          controller: telefonoController,
                         ),
                         const SizedBox(height: 16),
 
-                        // CAMPO DIRECCIÓN (controlado y auto-llenado)
                         _buildInputField(
                           icon: Icons.home_outlined,
                           hint: "Dirección",
@@ -110,13 +239,14 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // BOTÓN PARA SELECCIONAR UBICACIÓN
+                        // BOTÓN PARA ABRIR EL MAPA
                         ElevatedButton(
                           onPressed: () async {
                             final LatLng? point = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const SelectLocationScreen(),
+                                builder: (_) =>
+                                    const SelectLocationScreen(),
                               ),
                             );
 
@@ -124,22 +254,26 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                               latitud = point.latitude;
                               longitud = point.longitude;
 
-                              // Obtener dirección real desde lat/lng
-                              List<Placemark> places =
-                                  await placemarkFromCoordinates(
-                                latitud!,
-                                longitud!,
-                              );
+                              // Obtener dirección real (texto)
+                              try {
+                                List<Placemark> places =
+                                    await placemarkFromCoordinates(
+                                  latitud!,
+                                  longitud!,
+                                );
 
-                              Placemark place = places.first;
+                                Placemark place = places.first;
 
-                              String fullAddress =
-                                  "${place.street}, ${place.locality}, "
-                                  "${place.administrativeArea}, ${place.country}";
+                                String fullAddress =
+                                    "${place.street}, ${place.locality}, "
+                                    "${place.administrativeArea}, ${place.country}";
 
-                              setState(() {
-                                addressController.text = fullAddress;
-                              });
+                                setState(() {
+                                  addressController.text = fullAddress;
+                                });
+                              } catch (e) {
+                                print('Error al obtener dirección: $e');
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -158,9 +292,46 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
 
                         const SizedBox(height: 20),
 
+                        // Botón para seleccionar servicios que ofrece el técnico
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final result = await Navigator.push<List<int>>(
+                                context,
+                                MaterialPageRoute(builder: (_) => const TechnicianServicesScreen()),
+                              );
+
+                              if (result != null) {
+                                setState(() {
+                                  selectedServiceIds = result;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Servicios seleccionados: ${selectedServiceIds.length}')),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: midGreen,
+                              foregroundColor: white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              selectedServiceIds.isEmpty ? 'Seleccionar servicios' : 'Servicios: ${selectedServiceIds.length}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
                         _buildInputField(
                           icon: Icons.build_outlined,
                           hint: "Especialidad (Electricista, Plomero, etc.)",
+                          controller: especialidadController,
                         ),
                         const SizedBox(height: 16),
 
@@ -168,18 +339,21 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                           icon: Icons.work_history_outlined,
                           hint: "Años de experiencia",
                           keyboard: TextInputType.number,
+                          controller: experienciaController,
                         ),
                         const SizedBox(height: 16),
 
                         _buildInputField(
                           icon: Icons.attach_money,
-                          hint: "Costo aproximado por servicio",
+                          hint: "Tarifa por hora",
                           keyboard: TextInputType.number,
+                          controller: tarifaController,
                         ),
                         const SizedBox(height: 16),
 
                         // DESCRIPCIÓN
                         TextField(
+                          controller: descripcionController,
                           maxLines: 4,
                           decoration: InputDecoration(
                             filled: true,
@@ -194,17 +368,30 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                           ),
                         ),
 
+                        const SizedBox(height: 16),
+
+                        _buildInputField(
+                          icon: Icons.lock_outline,
+                          hint: "Contraseña",
+                          obscure: true,
+                          controller: passwordController,
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildInputField(
+                          icon: Icons.lock_outline,
+                          hint: "Confirmar contraseña",
+                          obscure: true,
+                          controller: confirmPasswordController,
+                        ),
+
                         const SizedBox(height: 24),
 
                         // BOTÓN REGISTRAR
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {Navigator.pushReplacement( context, MaterialPageRoute(builder: (context) => const TechnicianHomeScreen()),
-                            );
-                              // Aquí guardarás:
-                              // dirección, latitud, longitud y demás datos en la BD
-                            },
+                            onPressed: _isLoading ? null : _handleRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: midGreen,
                               foregroundColor: white,
@@ -214,13 +401,23 @@ class _RegisterTechnicianScreenState extends State<RegisterTechnicianScreen> {
                               ),
                               elevation: 5,
                             ),
-                            child: const Text(
-                              "Registrarme como técnico",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    "Registrarme como técnico",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],

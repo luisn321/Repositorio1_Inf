@@ -3,6 +3,7 @@ import 'package:flutter_application_1/services/api.dart';
 import 'RegisterScreen.dart';
 import 'ClientHomeScreen.dart';
 import 'TechnicianHomeScreen.dart';
+import '../config/app_icons.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,14 +13,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const Color darkGreen = Color(0xFF0F6B44);
-  static const Color midGreen = Color(0xFF2DBE7F);
-  static const Color lightGreen = Color(0xFFA8E6CF);
-  static const Color white = Colors.white;
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -46,13 +43,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       final userType = result['user_type']; // 'client' o 'technician'
+      final userId = result['id_user'] as int?; // ID del usuario
+
+      print('🔵 Usuario logueado - Tipo: $userType, ID: $userId');
 
       // Navega según el tipo de usuario, limpiando el stack
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => userType == 'client'
-              ? const ClientHomeScreen()
-              : const TechnicianHomeScreen(),
+              ? ClientHomeScreen(clientId: userId)
+              : TechnicianHomeScreen(technicianId: userId),
         ),
         (route) => false,
       );
@@ -68,14 +68,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), duration: const Duration(seconds: 3)),
+      SnackBar(
+        content: Text(msg),
+        duration: const Duration(seconds: 3),
+        backgroundColor: AppIcons.darkGreen,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkGreen,
+      backgroundColor: AppIcons.darkGreen,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -86,28 +90,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
 
                   // TÍTULO
-                  const Text(
+                  Text(
                     "Iniciar sesión",
-                    style: TextStyle(
+                    style: AppIcons.headingStyle.copyWith(
+                      color: AppIcons.white,
                       fontSize: 32,
-                      color: white,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+
+                  Text(
+                    "Bienvenido a Servitec",
+                    style: AppIcons.bodyStyle.copyWith(
+                      color: AppIcons.lightGreen,
+                      fontSize: 15,
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
 
                   // CARD con inputs
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: lightGreen,
-                      borderRadius: BorderRadius.circular(25),
+                      color: AppIcons.lightGreen,
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
@@ -116,17 +130,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         // INPUT EMAIL
                         TextField(
                           controller: emailController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: white,
-                            hintText: "Correo electrónico",
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 16),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide.none,
-                            ),
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: AppIcons.getInputDecoration(
+                            labelText: "Correo electrónico",
+                            hintText: "tu@email.com",
+                            prefixIcon: Icons.email_outlined,
+                          ).copyWith(
+                            fillColor: AppIcons.white,
                           ),
                         ),
 
@@ -135,17 +145,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         // INPUT PASSWORD
                         TextField(
                           controller: passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: white,
-                            hintText: "Contraseña",
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 16),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide.none,
+                          obscureText: _obscurePassword,
+                          decoration: AppIcons.getInputDecoration(
+                            labelText: "Contraseña",
+                            hintText: "••••••••",
+                            prefixIcon: Icons.lock_outline,
+                            suffixIcon: _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ).copyWith(
+                            fillColor: AppIcons.white,
+                            suffixIconConstraints: const BoxConstraints(
+                              minWidth: 48,
+                              minHeight: 48,
+                            ),
+                            suffixIcon: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              child: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppIcons.midGreen,
+                                size: 22,
+                              ),
                             ),
                           ),
                         ),
@@ -162,44 +188,45 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               "¿Olvidaste tu contraseña?",
                               style: TextStyle(
-                                fontSize: 15,
-                                color: darkGreen.withOpacity(0.9),
+                                fontSize: 14,
+                                color: AppIcons.darkGreen,
+                                fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 28),
 
                         // BOTÓN INICIAR SESIÓN
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _handleLogin,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: midGreen,
-                              foregroundColor: white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                            style: AppIcons.primaryButtonStyle.copyWith(
+                              backgroundColor: MaterialStateProperty.all(
+                                AppIcons.midGreen,
                               ),
-                              elevation: 5,
+                              padding: MaterialStateProperty.all(
+                                const EdgeInsets.symmetric(vertical: 16),
+                              ),
                             ),
                             child: isLoading
                                 ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
+                                    height: 22,
+                                    width: 22,
                                     child: CircularProgressIndicator(
-                                      color: white,
-                                      strokeWidth: 2,
+                                      color: AppIcons.white,
+                                      strokeWidth: 2.5,
                                     ),
                                   )
                                 : const Text(
                                     "Entrar",
                                     style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w600,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                           ),
@@ -208,23 +235,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // CREAR CUENTA
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const RegisterScreen(),
+                        ),
                       );
                     },
-                    child: const Text(
-                      "¿No tienes cuenta? Regístrate",
-                      style: TextStyle(
-                        color: white,
-                        fontSize: 17,
-                        decoration: TextDecoration.underline,
-                        fontWeight: FontWeight.w500,
+                    child: RichText(
+                      text: TextSpan(
+                        text: "¿No tienes cuenta? ",
+                        style: AppIcons.bodyStyle.copyWith(
+                          color: AppIcons.white,
+                          fontSize: 15,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Regístrate aquí",
+                            style: AppIcons.bodyStyle.copyWith(
+                              color: AppIcons.lightGreen,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
