@@ -1,6 +1,7 @@
 /// Modelo para registro de técnico
 class SolicitudRegistroTecnicoModelo {
   final String nombre;
+  final String apellido;  // ✨ NUEVO: Apellido del técnico
   final String correo;
   final String contrasena;
   final String telefono;
@@ -12,6 +13,7 @@ class SolicitudRegistroTecnicoModelo {
 
   SolicitudRegistroTecnicoModelo({
     required this.nombre,
+    required this.apellido,  // ✨ NUEVO
     required this.correo,
     required this.contrasena,
     required this.telefono,
@@ -25,7 +27,8 @@ class SolicitudRegistroTecnicoModelo {
   /// Convierte el modelo a JSON para enviar al servidor
   Map<String, dynamic> aJson() {
     return {
-      'name': nombre,
+      'firstName': nombre,  // Cambiar a firstName para que coincida con backend
+      'lastName': apellido,  // ✨ NUEVO: Añadir lastName
       'email': correo,
       'password': contrasena,
       'phone': telefono,
