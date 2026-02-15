@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../modelos/tecnico_modelo.dart';
 import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 
@@ -15,18 +17,26 @@ class ServicioTecnicos {
         throw Exception('No authorization token found');
       }
 
-      // Simulando llamada HTTP - en producción usar http.get
       debugPrint('📡 [ServicioTecnicos] GET $_urlBase/technicians');
-      debugPrint('🔑 Token: ${token.substring(0, 20)}...');
 
-      // TODO: Implementar llamada real con http.get()
-      // var respuesta = await http.get(
-      //   Uri.parse('$_urlBase/technicians'),
-      //   headers: {'Authorization': 'Bearer $token'},
-      // );
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/technicians'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
 
-      // Por ahora retornamos lista vacía - será implementado cuando el frontend conecte
-      return [];
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final tecnicos = datos
+            .map((tecnico) => TecnicoModelo.desdeJson(tecnico))
+            .toList();
+        debugPrint('✅ Obtenidos ${tecnicos.length} técnicos');
+        return tecnicos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerTodosTecnicos: $e');
       rethrow;
@@ -43,8 +53,23 @@ class ServicioTecnicos {
 
       debugPrint('📡 [ServicioTecnicos] GET $_urlBase/technicians/$idTecnico');
 
-      // TODO: Implementar con http.get()
-      return null;
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/technicians/$idTecnico'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final tecnico = TecnicoModelo.desdeJson(datos);
+        debugPrint('✅ Técnico obtenido: ${tecnico.nombreCompleto}');
+        return tecnico;
+      } else {
+        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        return null;
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerTecnicoPorId: $e');
       rethrow;
@@ -61,8 +86,24 @@ class ServicioTecnicos {
 
       debugPrint('📡 [ServicioTecnicos] GET $_urlBase/technicians?serviceId=$idServicio');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/technicians?serviceId=$idServicio'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final tecnicos = datos
+            .map((tecnico) => TecnicoModelo.desdeJson(tecnico))
+            .toList();
+        debugPrint('✅ Obtenidos ${tecnicos.length} técnicos para servicio $idServicio');
+        return tecnicos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerTecnicosPorServicio: $e');
       rethrow;
@@ -86,8 +127,24 @@ class ServicioTecnicos {
           '$_urlBase/technicians/nearby?lat=$latitud&lng=$longitud&service=$idServicio&radius=$radiusKm';
       debugPrint('📡 [ServicioTecnicos] GET $url');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final tecnicos = datos
+            .map((tecnico) => TecnicoModelo.desdeJson(tecnico))
+            .toList();
+        debugPrint('✅ Obtenidos ${tecnicos.length} técnicos cercanos');
+        return tecnicos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en buscarTecnicosCercanos: $e');
       rethrow;
@@ -102,11 +159,27 @@ class ServicioTecnicos {
         throw Exception('No authorization token found');
       }
 
-      final url = '$_urlBase/technicians/search?name=$nombreBusqueda';
+      final url = '$_urlBase/technicians/search?name=${Uri.encodeComponent(nombreBusqueda)}';
       debugPrint('📡 [ServicioTecnicos] GET $url');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final tecnicos = datos
+            .map((tecnico) => TecnicoModelo.desdeJson(tecnico))
+            .toList();
+        debugPrint('✅ Búsqueda encontró ${tecnicos.length} técnicos');
+        return tecnicos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en buscarTecnicosPorNombre: $e');
       rethrow;
