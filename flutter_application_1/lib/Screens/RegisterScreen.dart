@@ -308,7 +308,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final apiService = ApiService();
-      await apiService.registerClient(
+      final result = await apiService.registerClient(
         nombre: nombreController.text,
         apellido: apellidoController.text,
         email: emailController.text,
@@ -327,10 +327,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
 
+        // Obtener el ID del cliente registrado
+        final clientId = result['id_cliente'] ?? result['idCliente'] ?? result['id'] as int?;
+        print('🟠 Resultado completo del registro: $result');
+        print('🟠 Cliente registrado con ID: $clientId');
+
         // Navegar a home sin permitir volver
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const ClientHomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => ClientHomeScreen(clientId: clientId ?? 0),
+          ),
           (route) => false,
         );
       }

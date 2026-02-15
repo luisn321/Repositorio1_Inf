@@ -4,7 +4,12 @@ import 'ClientProfileScreen.dart';
 import 'ServiceDetailScreen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
-  const ClientHomeScreen({super.key});
+  final int? clientId;
+
+  const ClientHomeScreen({
+    super.key,
+    this.clientId,
+  });
 
   @override
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
@@ -17,12 +22,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   static const Color white = Colors.white;
 
-  // ------- PANTALLAS DEL CLIENTE -------
-  final List<Widget> pages = [
-    const _HomeView(),         // ← Inicio
-    const ClientRequestScreen(), // ← Mis servicios
-    const ClientProfileScreen(), // ← Perfil
-  ];
+  late List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar las páginas con el clientId
+    pages = [
+      const _HomeView(),         // ← Inicio
+      const ClientRequestScreen(), // ← Mis servicios
+      ClientProfileScreen(clientId: widget.clientId ?? 0), // ← Perfil
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

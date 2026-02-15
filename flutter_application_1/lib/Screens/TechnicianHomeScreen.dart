@@ -4,7 +4,12 @@ import 'TechnicianRequestScreen.dart';   // ← Nombre correcto
 import 'TechnicianProfileScreen.dart';
 
 class TechnicianHomeScreen extends StatefulWidget {
-  const TechnicianHomeScreen({super.key});
+  final int? technicianId;
+
+  const TechnicianHomeScreen({
+    super.key,
+    this.technicianId,
+  });
 
   @override
   State<TechnicianHomeScreen> createState() => _TechnicianHomeScreenState();
@@ -16,12 +21,17 @@ class _TechnicianHomeScreenState extends State<TechnicianHomeScreen> {
   static const Color darkGreen = Color(0xFF0F6B44);
   static const Color white = Colors.white;
 
-  // ← Las 3 pantallas del panel del técnico
-  final List<Widget> screens = [
-    const TechnicianServicesScreen(),     // → Mis servicios
-    const TechnicianRequestScreen(),      // → Mis solicitudes
-    const TechnicianProfileScreen(),      // → Mi perfil
-  ];
+  late List<Widget> screens;
+
+  @override
+  void initState() {
+    super.initState();
+    screens = [
+      const TechnicianServicesScreen(),     // → Mis servicios
+      const TechnicianRequestScreen(),      // → Mis solicitudes
+      TechnicianProfileScreen(technicianId: widget.technicianId ?? 0),      // → Mi perfil
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

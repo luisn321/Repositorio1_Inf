@@ -46,13 +46,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       final userType = result['user_type']; // 'client' o 'technician'
+      final userId = result['id_user'] as int?; // ID del usuario
+
+      print('🔵 Usuario logueado - Tipo: $userType, ID: $userId');
 
       // Navega según el tipo de usuario, limpiando el stack
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => userType == 'client'
-              ? const ClientHomeScreen()
-              : const TechnicianHomeScreen(),
+              ? ClientHomeScreen(clientId: userId)
+              : TechnicianHomeScreen(technicianId: userId),
         ),
         (route) => false,
       );

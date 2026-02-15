@@ -65,9 +65,9 @@ class ApiService {
         'email': email,
         'password': password,
         'telefono': telefono,
-        'direccionText': direccionText,  // ✅ CAMBIO: camelCase en lugar de snake_case
-        'lat': lat,
-        'lng': lng,
+        'direccion_text': direccionText,
+        'latitud': lat,
+        'longitud': lng,
       };
 
       print('🔵 URL: $API_BASE_URL/auth/register/client');
@@ -124,15 +124,18 @@ class ApiService {
           'email': email,
           'password': password,
           'telefono': telefono,
-          'ubicacion': ubicacionText,  // ✅ Simplificado
-          'lat': lat,
-          'lng': lng,
-          'tarifaHora': tarifaHora,  // ✅ camelCase
-          'serviceIds': serviceIds,  // ✅ camelCase
-          'experienciaYears': int.tryParse(experiencia) ?? 0,  // ✅ camelCase
+           'ubicacionText': ubicacionText,
+           'lat': lat,
+           'lng': lng,
+           'tarifaHora': tarifaHora,
+           'serviceIds': serviceIds,
+           'experienciaYears': int.tryParse(experiencia) ?? 0,
           'descripcion': descripcion,
         }),
       );
+
+      print(' Status: ${resp.statusCode}');
+      print(' Response: ${resp.body}');
 
       if (resp.statusCode == 201 || resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
@@ -142,7 +145,7 @@ class ApiService {
       } else if (resp.statusCode == 409) {
         throw Exception('El email ya está registrado.');
       } else {
-        throw Exception('Error al registrar: ${resp.statusCode}');
+        throw Exception('Error al registrar: ${resp.statusCode} - ${resp.body}');
       }
     } catch (e) {
       rethrow;
@@ -153,6 +156,120 @@ class ApiService {
   Future<String?> getToken() async {
     _authToken ??= await _secureStorage.read(key: 'auth_token');
     return _authToken;
+  }
+
+  /// GET /clients/{id} - Obtener perfil del cliente
+  Future<Map<String, dynamic>> getClientProfile(int clientId) async {
+    try {
+      final token = await getToken();
+      print('🔵 Obteniendo perfil del cliente: $clientId');
+      
+      // Intentar primero con /clients/
+      var response = await _client.get(
+        Uri.parse('$API_BASE_URL/clients/$clientId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print(' Status: ${response.statusCode}');
+      print(' Response: ${response.body}');
+
+      // Si falla, intentar con /auth/clients/
+      if (response.statusCode == 404) {
+        print('⚠️ Endpoint /clients no encontrado, intentando /auth/clients/');
+        response = await _client.get(
+          Uri.parse('$API_BASE_URL/auth/clients/$clientId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+        print(' Status: ${response.statusCode}');
+        print(' Response: ${response.body}');
+      }
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error al obtener perfil: ${response.statusCode}');
+      }
+    } catch (e) {
+      print(' Error: $e');
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  /// PUT /clients/{id} - Actualizar perfil del cliente
+  Future<Map<String, dynamic>> updateClientProfile({
+    required int clientId,
+    required String nombre,
+    required String apellido,
+    required String email,
+    required String telefono,
+    required String direccionText,
+    required double lat,
+    required double lng,
+    String? password,
+  }) async {
+    try {
+      final token = await getToken();
+      
+      final body = {
+        'nombre': nombre,
+        'apellido': apellido,
+        'email': email,
+        'telefono': telefono,
+         'direccion_text': direccionText,
+         'latitud': lat,
+         'longitud': lng,
+      };
+      
+      if (password != null && password.isNotEmpty) {
+        body['password'] = password;
+      }
+
+      print('🔵 Actualizando perfil del cliente: $clientId');
+      print('🔵 Body: ${jsonEncode(body)}');
+
+      // Intentar primero con /clients/
+      var response = await _client.put(
+        Uri.parse('$API_BASE_URL/clients/$clientId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      print(' Status: ${response.statusCode}');
+      print(' Response: ${response.body}');
+
+      // Si falla, intentar con /auth/clients/
+      if (response.statusCode == 404) {
+        print('⚠️ Endpoint /clients no encontrado, intentando /auth/clients/');
+        response = await _client.put(
+          Uri.parse('$API_BASE_URL/auth/clients/$clientId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(body),
+        );
+        print(' Status: ${response.statusCode}');
+        print(' Response: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error al actualizar perfil: ${response.statusCode}');
+      }
+    } catch (e) {
+      print(' Error: $e');
+      throw Exception('Error: $e');
+    }
   }
 
   /// Logout
@@ -351,6 +468,126 @@ class ApiService {
         throw Exception('Error al guardar calificación: ${response.statusCode}');
       }
     } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ==================== TECHNICIANS PROFILE ====================
+
+  /// GET /technicians/{id} - Obtener perfil del técnico
+  Future<Map<String, dynamic>> getTechnicianProfile(int technicianId) async {
+    try {
+      final token = await getToken();
+      print('🔵 Obteniendo perfil del técnico: $technicianId');
+      
+      // Intentar primero con /technicians/
+      var response = await _client.get(
+        Uri.parse('$API_BASE_URL/technicians/$technicianId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print(' Status: ${response.statusCode}');
+      print(' Response: ${response.body}');
+
+      // Si falla, intentar con /auth/technicians/
+      if (response.statusCode == 404) {
+        print(' Endpoint /technicians no encontrado, intentando /auth/technicians/');
+        response = await _client.get(
+          Uri.parse('$API_BASE_URL/auth/technicians/$technicianId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+        print(' Status: ${response.statusCode}');
+        print(' Response: ${response.body}');
+      }
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error al obtener perfil: ${response.statusCode}');
+      }
+    } catch (e) {
+      print(' Error: $e');
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  /// PUT /technicians/{id} - Actualizar perfil del técnico
+  Future<Map<String, dynamic>> updateTechnicianProfile({
+    required int technicianId,
+    required String nombre,
+    required String email,
+    required String telefono,
+    required String ubicacionText,
+    required double lat,
+    required double lng,
+    required double tarifaHora,
+    required String experiencia,
+    required String descripcion,
+    String? password,
+  }) async {
+    try {
+      final token = await getToken();
+      
+      final body = {
+        'nombre': nombre,
+        'email': email,
+        'telefono': telefono,
+         'ubicacion_text': ubicacionText,
+         'latitud': lat,
+         'longitud': lng,
+         'tarifa_hora': tarifaHora,
+         'experiencia_years': int.tryParse(experiencia) ?? 0,
+        'descripcion': descripcion,
+      };
+      
+      if (password != null && password.isNotEmpty) {
+        body['password'] = password;
+      }
+
+      print(' Actualizando perfil del técnico: $technicianId');
+      print(' Body: ${jsonEncode(body)}');
+
+      // Intentar primero con /technicians/
+      var response = await _client.put(
+        Uri.parse('$API_BASE_URL/technicians/$technicianId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      print(' Status: ${response.statusCode}');
+      print(' Response: ${response.body}');
+
+      // Si falla, intentar con /auth/technicians/
+      if (response.statusCode == 404) {
+        print(' Endpoint /technicians no encontrado, intentando /auth/technicians/');
+        response = await _client.put(
+          Uri.parse('$API_BASE_URL/auth/technicians/$technicianId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(body),
+        );
+        print(' Status: ${response.statusCode}');
+        print(' Response: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error al actualizar perfil: ${response.statusCode}');
+      }
+    } catch (e) {
+      print(' Error: $e');
       throw Exception('Error: $e');
     }
   }
