@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../modelos/index.dart';
 import '../servicios_red/index.dart';
 import '../validadores/index.dart';
 import '../config/app_icons.dart';

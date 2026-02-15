@@ -64,7 +64,7 @@ class ContratacionModelo {
         if (fotos.startsWith('[')) {
           // Es un array JSON
           return List<String>.from(
-            (fotos as String).replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').split(','),
+            fotos.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').split(','),
           );
         }
         return [fotos];

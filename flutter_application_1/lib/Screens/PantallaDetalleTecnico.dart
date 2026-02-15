@@ -69,12 +69,7 @@ class _PantallaDetalleTecnicoState extends State<PantallaDetalleTecnico> {
                           ? CircleAvatar(
                               radius: 60,
                               backgroundImage: NetworkImage(tecnico.fotoPerfil!),
-                              errorBuilder: (context, error, stackTrace) {
-                                return const CircleAvatar(
-                                  radius: 60,
-                                  child: Icon(Icons.person, size: 48),
-                                );
-                              },
+                              onBackgroundImageError: (error, stackTrace) {},
                             )
                           : const CircleAvatar(
                               radius: 60,

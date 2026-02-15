@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../validadores/validadores_servicios.dart';
-import '../servicios_red/servicio_calificaciones.dart';
 
 class PantallaCalificaciones extends StatefulWidget {
   final int idContratacion;
@@ -21,7 +20,6 @@ class PantallaCalificaciones extends StatefulWidget {
 class _PantallaCalificacionesState extends State<PantallaCalificaciones> {
   final _formKey = GlobalKey<FormState>();
   final _controladorComentario = TextEditingController();
-  final ServicioCalificaciones _servicioCalificaciones = ServicioCalificaciones();
 
   int _puntuacionSeleccionada = 0;
   bool _enviando = false;

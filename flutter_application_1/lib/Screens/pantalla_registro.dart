@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../modelos/index.dart';
 import '../servicios_red/index.dart';
-import '../validadores/index.dart';
+import '../validadores/validadores_autenticacion.dart';
 import '../config/app_icons.dart';
-import 'pantalla_selector_tipo_usuario.dart';
 
 /// Pantalla de registro de usuario
 /// Permite elegir entre registro de cliente o técnico

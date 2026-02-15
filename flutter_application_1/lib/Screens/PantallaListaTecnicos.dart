@@ -123,9 +123,7 @@ class _PantallaListaTecnicosState extends State<PantallaListaTecnicos> {
         leading: tecnico.fotoPerfil != null
             ? CircleAvatar(
                 backgroundImage: NetworkImage(tecnico.fotoPerfil!),
-                errorBuilder: (context, error, stackTrace) {
-                  return const CircleAvatar(child: Icon(Icons.person));
-                },
+                onBackgroundImageError: (error, stackTrace) {},
               )
             : const CircleAvatar(child: Icon(Icons.person)),
         title: Text(tecnico.nombre),
