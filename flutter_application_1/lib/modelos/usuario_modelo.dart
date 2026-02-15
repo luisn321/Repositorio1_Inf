@@ -65,10 +65,18 @@ class UsuarioModelo {
   String obtenerNombreCompleto() => '$nombre $apellido';
 
   /// Indica si el usuario es técnico
-  bool esTecnico() => tipoUsuario.toLowerCase() == 'tecnico';
+  /// Acepta tanto "tecnico" (español) como "technician" (inglés del backend)
+  bool esTecnico() {
+    final tipo = tipoUsuario.toLowerCase();
+    return tipo == 'tecnico' || tipo == 'technician';
+  }
 
   /// Indica si el usuario es cliente
-  bool esCliente() => tipoUsuario.toLowerCase() == 'cliente';
+  /// Acepta tanto "cliente" (español) como "client" (inglés del backend)
+  bool esCliente() {
+    final tipo = tipoUsuario.toLowerCase();
+    return tipo == 'cliente' || tipo == 'client';
+  }
 
   @override
   String toString() => 'UsuarioModelo(id: $id, nombre: $nombre, tipoUsuario: $tipoUsuario)';
