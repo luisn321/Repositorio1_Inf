@@ -12,6 +12,7 @@ namespace ServitecAPI.DTOs
     public class UpdateTechnicianRequest
     {
         public string? Nombre { get; set; }
+        public string? Apellido { get; set; }  // ✨ NUEVO: Apellido del técnico
         public string? Email { get; set; }
         public string? Telefono { get; set; }
         public string? UbicacionText { get; set; }
@@ -28,6 +29,7 @@ namespace ServitecAPI.DTOs
     {
         public int IdTecnico { get; set; }
         public string Nombre { get; set; } = "";
+        public string? Apellido { get; set; }  // ✨ NUEVO: Apellido del técnico
         public string Email { get; set; } = "";
         public string? Telefono { get; set; }
         public string? UbicacionText { get; set; }

@@ -261,6 +261,7 @@ namespace ServitecAPI.Repositories
             {
                 IdTecnico = (int)data["id_tecnico"],
                 Nombre = (string)data["nombre"],
+                Apellido = data.ContainsKey("apellido") ? (string?)data["apellido"] : null,  // ✨ NUEVO
                 Email = (string)data["email"],
                 Contrasena = (string)data["password_hash"],
                 Telefono = data.ContainsKey("telefono") ? (string?)data["telefono"] : null,

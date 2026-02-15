@@ -49,6 +49,7 @@ CREATE TABLE servicios (
 CREATE TABLE tecnicos (
   id_tecnico INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL,
+  apellido VARCHAR(120),  -- ✨ NUEVO: Apellido del técnico
   email VARCHAR(150) UNIQUE,
   password_hash VARCHAR(255),
   telefono VARCHAR(30),

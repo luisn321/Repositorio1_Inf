@@ -171,6 +171,7 @@ namespace ServitecAPI.Services
             {
                 IdTecnico = technician.IdTecnico,
                 Nombre = technician.Nombre,
+                Apellido = technician.Apellido,  // ✨ NUEVO
                 Email = technician.Email,
                 Telefono = technician.Telefono,
                 UbicacionText = technician.UbicacionText,

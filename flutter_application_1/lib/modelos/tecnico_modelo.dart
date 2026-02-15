@@ -1,6 +1,7 @@
 class TecnicoModelo {
   final int idTecnico;
   final String nombre;
+  final String? apellido;
   final String email;
   final String telefono;
   final double? latitud;
@@ -14,6 +15,7 @@ class TecnicoModelo {
   TecnicoModelo({
     required this.idTecnico,
     required this.nombre,
+    this.apellido,
     required this.email,
     required this.telefono,
     this.latitud,
@@ -29,6 +31,7 @@ class TecnicoModelo {
     return TecnicoModelo(
       idTecnico: json['id_tecnico'] as int? ?? json['idTecnico'] as int? ?? 0,
       nombre: json['nombre'] as String? ?? '',
+      apellido: json['apellido'] as String?,
       email: json['email'] as String? ?? '',
       telefono: json['telefono'] as String? ?? '',
       latitud: (json['latitud'] as num?)?.toDouble(),
@@ -45,6 +48,7 @@ class TecnicoModelo {
     return {
       'id_tecnico': idTecnico,
       'nombre': nombre,
+      'apellido': apellido,
       'email': email,
       'telefono': telefono,
       'latitud': latitud,
@@ -57,6 +61,8 @@ class TecnicoModelo {
     };
   }
 
+  String get nombreCompleto => apellido != null ? '$nombre $apellido' : nombre;
+
   @override
-  String toString() => 'TecnicoModelo(id=$idTecnico, nombre=$nombre, tarifa=$tarifaHora, calificacion=$calificacionPromedio)';
+  String toString() => 'TecnicoModelo(id=$idTecnico, nombre=$nombreCompleto, tarifa=$tarifaHora, calificacion=$calificacionPromedio)';
 }

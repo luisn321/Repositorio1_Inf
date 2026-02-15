@@ -44,17 +44,20 @@ class _PantallaListaTecnicosState extends State<PantallaListaTecnicos> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final esMovil = size.width < 600;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Técnicos Disponibles'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF1976D2),
         elevation: 0,
       ),
       body: Column(
         children: [
           // Barra de búsqueda
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(esMovil ? 12 : 16),
             child: TextField(
               controller: _controladorBusqueda,
               onChanged: _buscarTecnico,
@@ -64,6 +67,7 @@ class _PantallaListaTecnicosState extends State<PantallaListaTecnicos> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -119,34 +123,70 @@ class _PantallaListaTecnicosState extends State<PantallaListaTecnicos> {
   Widget _construirTarjetaTecnico(BuildContext context, TecnicoModelo tecnico) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: ListTile(
-        leading: tecnico.fotoPerfil != null
-            ? CircleAvatar(
-                backgroundImage: NetworkImage(tecnico.fotoPerfil!),
-                onBackgroundImageError: (error, stackTrace) {},
-              )
-            : const CircleAvatar(child: Icon(Icons.person)),
-        title: Text(tecnico.nombre),
-        subtitle: Column(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
-            Text('⭐ ${tecnico.calificacionPromedio}/5 (${tecnico.numCalificaciones} calificaciones)'),
-            Text('💰 \$${tecnico.tarifaHora.toStringAsFixed(2)}/hr'),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.phone, size: 18),
+            // Avatar
+            tecnico.fotoPerfil != null
+                ? CircleAvatar(
+                    radius: 40,
+                    backgroundImage: NetworkImage(tecnico.fotoPerfil!),
+                    onBackgroundImageError: (error, stackTrace) {},
+                  )
+                : const CircleAvatar(
+                    radius: 40,
+                    child: Icon(Icons.person),
+                  ),
             const SizedBox(width: 12),
-            const Icon(Icons.arrow_forward),
+            // Información
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tecnico.nombreCompleto,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.orange, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${tecnico.calificacionPromedio}/5 (${tecnico.numCalificaciones})',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '💰 \$${tecnico.tarifaHora.toStringAsFixed(2)}/hr',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Botón ver más
+            GestureDetector(
+              onTap: () {
+                debugPrint('Tap en técnico: ${tecnico.nombreCompleto}');
+              },
+              child: const Icon(Icons.arrow_forward, size: 20),
+            ),
           ],
         ),
-        onTap: () {
-          // TODO: Navegar a detalle del técnico
-          debugPrint('Tap en técnico: ${tecnico.nombre}');
-        },
       ),
     );
   }
