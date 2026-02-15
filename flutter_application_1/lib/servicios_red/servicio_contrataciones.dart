@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../modelos/contratacion_modelo.dart';
 import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 
@@ -17,8 +19,24 @@ class ServicioContrataciones {
 
       debugPrint('📡 [ServicioContrataciones] GET $_urlBase/contractions');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/contractions'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final contrataciones = datos
+            .map((cont) => ContratacionModelo.desdeJson(cont))
+            .toList();
+        debugPrint('✅ Obtenidas ${contrataciones.length} contrataciones');
+        return contrataciones;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerTodasLasContrataciones: $e');
       rethrow;
@@ -35,8 +53,23 @@ class ServicioContrataciones {
 
       debugPrint('📡 [ServicioContrataciones] GET $_urlBase/contractions/$idContratacion');
 
-      // TODO: Implementar con http.get()
-      return null;
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/contractions/$idContratacion'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final contratacion = ContratacionModelo.desdeJson(datos);
+        debugPrint('✅ Contratación obtenida: $idContratacion');
+        return contratacion;
+      } else {
+        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        return null;
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerContratacionPorId: $e');
       rethrow;
@@ -54,8 +87,24 @@ class ServicioContrataciones {
       final url = '$_urlBase/contractions?status=$estado';
       debugPrint('📡 [ServicioContrataciones] GET $url');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final contrataciones = datos
+            .map((cont) => ContratacionModelo.desdeJson(cont))
+            .toList();
+        debugPrint('✅ Obtenidas ${contrataciones.length} contrataciones con estado $estado');
+        return contrataciones;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerContratacionesPorEstado: $e');
       rethrow;
@@ -72,8 +121,24 @@ class ServicioContrataciones {
 
       debugPrint('📡 [ServicioContrataciones] GET $_urlBase/contractions/pending');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/contractions/pending'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final contrataciones = datos
+            .map((cont) => ContratacionModelo.desdeJson(cont))
+            .toList();
+        debugPrint('✅ Obtenidas ${contrataciones.length} contrataciones pendientes');
+        return contrataciones;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerContratacionesPendientes: $e');
       rethrow;
@@ -105,8 +170,23 @@ class ServicioContrataciones {
       debugPrint('📡 [ServicioContrataciones] POST $_urlBase/contractions');
       debugPrint('📦 Payload: $payload');
 
-      // TODO: Implementar con http.post()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final contratacion = ContratacionModelo.desdeJson(datos);
+        debugPrint('✅ Contratación creada: ${contratacion.idContratacion}');
+        return contratacion;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en crearContratacion: $e');
       rethrow;
@@ -129,8 +209,23 @@ class ServicioContrataciones {
       debugPrint('📡 [ServicioContrataciones] PUT $_urlBase/contractions/$idContratacion');
       debugPrint('📦 Payload: $payload');
 
-      // TODO: Implementar con http.put()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.put(
+        Uri.parse('$_urlBase/contractions/$idContratacion'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final contratacion = ContratacionModelo.desdeJson(datos);
+        debugPrint('✅ Estado actualizado: $nuevoEstado');
+        return contratacion;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en actualizarEstadoContratacion: $e');
       rethrow;
@@ -148,11 +243,28 @@ class ServicioContrataciones {
         throw Exception('No authorization token found');
       }
 
-      debugPrint('📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/assign');
-      debugPrint('📦 Body: idTecnico=$idTecnico');
+      final payload = {'technicianId': idTecnico};
 
-      // TODO: Implementar con http.post()
-      throw Exception('Not yet implemented');
+      debugPrint('📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/assign');
+      debugPrint('📦 Body: $payload');
+
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/assign'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final contratacion = ContratacionModelo.desdeJson(datos);
+        debugPrint('✅ Técnico asignado: $idTecnico');
+        return contratacion;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en asignarTecnico: $e');
       rethrow;
@@ -169,8 +281,22 @@ class ServicioContrataciones {
 
       debugPrint('📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/complete');
 
-      // TODO: Implementar con http.post()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/complete'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final contratacion = ContratacionModelo.desdeJson(datos);
+        debugPrint('✅ Contratación completada: $idContratacion');
+        return contratacion;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en completarContratacion: $e');
       rethrow;
@@ -187,8 +313,22 @@ class ServicioContrataciones {
 
       debugPrint('📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/cancel');
 
-      // TODO: Implementar con http.post()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/cancel'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final contratacion = ContratacionModelo.desdeJson(datos);
+        debugPrint('✅ Contratación cancelada: $idContratacion');
+        return contratacion;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en cancelarContratacion: $e');
       rethrow;

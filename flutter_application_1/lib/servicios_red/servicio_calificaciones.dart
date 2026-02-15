@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../modelos/calificacion_modelo.dart';
 import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 
@@ -18,8 +20,24 @@ class ServicioCalificaciones {
       final url = '$_urlBase/ratings?technicianId=$idTecnico';
       debugPrint('📡 [ServicioCalificaciones] GET $url');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final calificaciones = datos
+            .map((cal) => CalificacionModelo.desdeJson(cal))
+            .toList();
+        debugPrint('✅ Obtenidas ${calificaciones.length} calificaciones para técnico $idTecnico');
+        return calificaciones;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerCalificacionesPorTecnico: $e');
       rethrow;
@@ -36,8 +54,23 @@ class ServicioCalificaciones {
 
       debugPrint('📡 [ServicioCalificaciones] GET $_urlBase/ratings/$idCalificacion');
 
-      // TODO: Implementar con http.get()
-      return null;
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/ratings/$idCalificacion'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final calificacion = CalificacionModelo.desdeJson(datos);
+        debugPrint('✅ Calificación obtenida: $idCalificacion');
+        return calificacion;
+      } else {
+        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        return null;
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerCalificacionPorId: $e');
       rethrow;
@@ -55,8 +88,26 @@ class ServicioCalificaciones {
       final url = '$_urlBase/ratings?contractionId=$idContratacion';
       debugPrint('📡 [ServicioCalificaciones] GET $url');
 
-      // TODO: Implementar con http.get()
-      return null;
+      final respuesta = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        if (datos is List && datos.isNotEmpty) {
+          final calificacion = CalificacionModelo.desdeJson(datos.first);
+          debugPrint('✅ Calificación obtenida para contratación $idContratacion');
+          return calificacion;
+        }
+        return null;
+      } else {
+        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        return null;
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerCalificacionPorContratacion: $e');
       rethrow;
@@ -92,8 +143,23 @@ class ServicioCalificaciones {
       debugPrint('📦 Payload: $payload');
       debugPrint('⭐ Puntuación: $puntuacion/5 - Comentario: $comentario');
 
-      // TODO: Implementar con http.post()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/ratings'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final calificacion = CalificacionModelo.desdeJson(datos);
+        debugPrint('✅ Calificación creada: ${calificacion.idCalificacion}');
+        return calificacion;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en crearCalificacion: $e');
       rethrow;

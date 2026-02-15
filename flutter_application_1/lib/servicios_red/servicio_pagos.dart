@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../modelos/pago_modelo.dart';
 import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 
@@ -17,8 +19,22 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/payments'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final pagos = datos.map((pago) => PagoModelo.desdeJson(pago)).toList();
+        debugPrint('✅ Obtenidos ${pagos.length} pagos');
+        return pagos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerTodosLosPagos: $e');
       rethrow;
@@ -35,8 +51,23 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments/$idPago');
 
-      // TODO: Implementar con http.get()
-      return null;
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/payments/$idPago'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final pago = PagoModelo.desdeJson(datos);
+        debugPrint('✅ Pago obtenido: $idPago');
+        return pago;
+      } else {
+        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        return null;
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerPagoPorId: $e');
       rethrow;
@@ -54,8 +85,22 @@ class ServicioPagos {
       final url = '$_urlBase/payments?contractionId=$idContratacion';
       debugPrint('📡 [ServicioPagos] GET $url');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final pagos = datos.map((pago) => PagoModelo.desdeJson(pago)).toList();
+        debugPrint('✅ Obtenidos ${pagos.length} pagos de contratación $idContratacion');
+        return pagos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerPagosPorContratacion: $e');
       rethrow;
@@ -72,8 +117,22 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments/pending');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/payments/pending'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final pagos = datos.map((pago) => PagoModelo.desdeJson(pago)).toList();
+        debugPrint('✅ Obtenidos ${pagos.length} pagos pendientes');
+        return pagos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerPagosPendientes: $e');
       rethrow;
@@ -90,8 +149,22 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments/overdue');
 
-      // TODO: Implementar con http.get()
-      return [];
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/payments/overdue'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body) as List;
+        final pagos = datos.map((pago) => PagoModelo.desdeJson(pago)).toList();
+        debugPrint('✅ Obtenidos ${pagos.length} pagos vencidos');
+        return pagos;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en obtenerPagosVencidos: $e');
       rethrow;
@@ -119,8 +192,23 @@ class ServicioPagos {
       debugPrint('📡 [ServicioPagos] POST $_urlBase/payments');
       debugPrint('📦 Payload: $payload');
 
-      // TODO: Implementar con http.post()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/payments'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final pago = PagoModelo.desdeJson(datos);
+        debugPrint('✅ Pago creado: ${pago.idPago}');
+        return pago;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en crearPago: $e');
       rethrow;
@@ -143,8 +231,23 @@ class ServicioPagos {
       debugPrint('📡 [ServicioPagos] PUT $_urlBase/payments/$idPago/status');
       debugPrint('📦 Payload: $payload');
 
-      // TODO: Implementar con http.put()
-      throw Exception('Not yet implemented');
+      final respuesta = await http.put(
+        Uri.parse('$_urlBase/payments/$idPago/status'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) {
+        final datos = json.decode(respuesta.body);
+        final pago = PagoModelo.desdeJson(datos);
+        debugPrint('✅ Estado actualizado: $nuevoEstado');
+        return pago;
+      } else {
+        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+      }
     } catch (e) {
       debugPrint('❌ Error en actualizarEstadoPago: $e');
       rethrow;
