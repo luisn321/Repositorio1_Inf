@@ -20,9 +20,11 @@ builder.Services.AddScoped<DatabaseService>();
 
 // Registrar Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITechnicianRepository, TechnicianRepository>();
 
 // Registrar Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITechnicianService, TechnicianService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

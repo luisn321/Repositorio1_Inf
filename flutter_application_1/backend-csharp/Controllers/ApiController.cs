@@ -290,81 +290,82 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTechnicianProfile(int id, [FromBody] UpdateTechnicianRequest req)
-        {
-            try
-            {
-                // Build query dynamically based on what fields are sent
-                var updates = new List<string>();
-                var parameters = new Dictionary<string, object> { { "id", id } };
+        // REFACTORING: UpdateTechnicianProfile moved to Controllers/TechnicianController.cs
+        // [HttpPut("{id}")]
+        // public async Task<IActionResult> UpdateTechnicianProfile(int id, [FromBody] UpdateTechnicianRequest req)
+        // {
+        //     try
+        //     {
+        //         // Build query dynamically based on what fields are sent
+        //         var updates = new List<string>();
+        //         var parameters = new Dictionary<string, object> { { "id", id } };
 
-                if (!string.IsNullOrEmpty(req.FirstName))
-                {
-                    updates.Add("nombre = @nombre");
-                    parameters["nombre"] = req.FirstName;
-                }
-                if (!string.IsNullOrEmpty(req.Email))
-                {
-                    updates.Add("email = @email");
-                    parameters["email"] = req.Email;
-                }
-                if (!string.IsNullOrEmpty(req.Phone))
-                {
-                    updates.Add("telefono = @telefono");
-                    parameters["telefono"] = req.Phone;
-                }
-                if (!string.IsNullOrEmpty(req.LocationText))
-                {
-                    updates.Add("ubicacion_text = @ubicacion_text");
-                    parameters["ubicacion_text"] = req.LocationText;
-                }
-                if (req.Latitude.HasValue)
-                {
-                    updates.Add("latitud = @latitud");
-                    parameters["latitud"] = req.Latitude;
-                }
-                if (req.Longitude.HasValue)
-                {
-                    updates.Add("longitud = @longitud");
-                    parameters["longitud"] = req.Longitude;
-                }
-                if (req.HourlyRate.HasValue)
-                {
-                    updates.Add("tarifa_hora = @tarifa_hora");
-                    parameters["tarifa_hora"] = req.HourlyRate;
-                }
-                if (req.ExperienceYears.HasValue)
-                {
-                    updates.Add("experiencia_years = @experiencia_years");
-                    parameters["experiencia_years"] = req.ExperienceYears;
-                }
-                if (!string.IsNullOrEmpty(req.Description))
-                {
-                    updates.Add("descripcion = @descripcion");
-                    parameters["descripcion"] = req.Description;
-                }
-                if (!string.IsNullOrEmpty(req.Password))
-                {
-                    updates.Add("password_hash = @password_hash");
-                    parameters["password_hash"] = _db.HashPassword(req.Password);
-                }
+        //         if (!string.IsNullOrEmpty(req.FirstName))
+        //         {
+        //             updates.Add("nombre = @nombre");
+        //             parameters["nombre"] = req.FirstName;
+        //         }
+        //         if (!string.IsNullOrEmpty(req.Email))
+        //         {
+        //             updates.Add("email = @email");
+        //             parameters["email"] = req.Email;
+        //         }
+        //         if (!string.IsNullOrEmpty(req.Phone))
+        //         {
+        //             updates.Add("telefono = @telefono");
+        //             parameters["telefono"] = req.Phone;
+        //         }
+        //         if (!string.IsNullOrEmpty(req.LocationText))
+        //         {
+        //             updates.Add("ubicacion_text = @ubicacion_text");
+        //             parameters["ubicacion_text"] = req.LocationText;
+        //         }
+        //         if (req.Latitude.HasValue)
+        //         {
+        //             updates.Add("latitud = @latitud");
+        //             parameters["latitud"] = req.Latitude;
+        //         }
+        //         if (req.Longitude.HasValue)
+        //         {
+        //             updates.Add("longitud = @longitud");
+        //             parameters["longitud"] = req.Longitude;
+        //         }
+        //         if (req.HourlyRate.HasValue)
+        //         {
+        //             updates.Add("tarifa_hora = @tarifa_hora");
+        //             parameters["tarifa_hora"] = req.HourlyRate;
+        //         }
+        //         if (req.ExperienceYears.HasValue)
+        //         {
+        //             updates.Add("experiencia_years = @experiencia_years");
+        //             parameters["experiencia_years"] = req.ExperienceYears;
+        //         }
+        //         if (!string.IsNullOrEmpty(req.Description))
+        //         {
+        //             updates.Add("descripcion = @descripcion");
+        //             parameters["descripcion"] = req.Description;
+        //         }
+        //         if (!string.IsNullOrEmpty(req.Password))
+        //         {
+        //             updates.Add("password_hash = @password_hash");
+        //             parameters["password_hash"] = _db.HashPassword(req.Password);
+        //         }
 
-                if (updates.Count == 0)
-                    return BadRequest(new { error = "No fields to update" });
+        //         if (updates.Count == 0)
+        //             return BadRequest(new { error = "No fields to update" });
 
-                updates.Add("updated_at = NOW()");
+        //         updates.Add("updated_at = NOW()");
 
-                var query = $"UPDATE tecnicos SET {string.Join(", ", updates)} WHERE id_tecnico = @id";
-                await _db.ExecuteNonQueryAsync(query, parameters);
+        //         var query = $"UPDATE tecnicos SET {string.Join(", ", updates)} WHERE id_tecnico = @id";
+        //         await _db.ExecuteNonQueryAsync(query, parameters);
 
-                return Ok(new { message = "Technician updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
+        //         return Ok(new { message = "Technician updated successfully" });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, new { error = ex.Message });
+        //     }
+        // }
 
         [HttpPost("{id}/services")]
         public async Task<IActionResult> UpdateTechnicianServices(int id, [FromBody] UpdateTechnicianServicesRequest req)
@@ -781,18 +782,6 @@ namespace ServitecAPI.Controllers
         public string? Password { get; set; }
     }
 
-    public class UpdateTechnicianRequest
-    {
-        public string? FirstName { get; set; }
-        public string? Email { get; set; }
-        public string? Phone { get; set; }
-        public string? LocationText { get; set; }
-        public double? Latitude { get; set; }
-        public double? Longitude { get; set; }
-        public double? HourlyRate { get; set; }
-        public int? ExperienceYears { get; set; }
-        public string? Description { get; set; }
-        public string? Password { get; set; }
-    }
+    // UpdateTechnicianRequest moved to DTOs/TechnicianDTOs.cs - REFACTORING IN PROGRESS
 }
    
