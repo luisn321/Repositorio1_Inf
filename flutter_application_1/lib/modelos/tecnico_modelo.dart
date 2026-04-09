@@ -11,6 +11,9 @@ class TecnicoModelo {
   final int numCalificaciones;
   final String? fotoPerfil;
   final List<int>? idServicios;
+  final int? experienciaYears;  // Años de experiencia
+  final String? descripcion;     // Descripción que puso al registrarse
+  final String? ubicacionText;   // Dirección
 
   TecnicoModelo({
     required this.idTecnico,
@@ -25,9 +28,26 @@ class TecnicoModelo {
     required this.numCalificaciones,
     this.fotoPerfil,
     this.idServicios,
+    this.experienciaYears,
+    this.descripcion,
+    this.ubicacionText,
   });
 
   factory TecnicoModelo.desdeJson(Map<String, dynamic> json) {
+    // Procesar servicios que vienen como List<Map> y extraer solo los IDs
+    List<int>? idServicios;
+    
+    // Si viene como 'servicios' (nombre del backend)
+    if (json['servicios'] != null) {
+      idServicios = (json['servicios'] as List<dynamic>?)
+          ?.map((s) => s['idServicio'] as int? ?? s['id_servicio'] as int? ?? 0)
+          .toList();
+    }
+    // Si viene como 'id_servicios' (nombre alternativo)
+    else if (json['id_servicios'] != null) {
+      idServicios = (json['id_servicios'] as List<dynamic>?)?.map((e) => e as int).toList();
+    }
+
     return TecnicoModelo(
       idTecnico: json['id_tecnico'] as int? ?? json['idTecnico'] as int? ?? 0,
       nombre: json['nombre'] as String? ?? '',
@@ -39,8 +59,13 @@ class TecnicoModelo {
       tarifaHora: (json['tarifa_hora'] as num? ?? json['tarifaHora'] as num? ?? 0).toDouble(),
       calificacionPromedio: (json['calificacion_promedio'] as num? ?? json['calificacionPromedio'] as num? ?? 0).toDouble(),
       numCalificaciones: json['num_calificaciones'] as int? ?? json['numCalificaciones'] as int? ?? 0,
-      fotoPerfil: json['foto_perfil_url'] as String? ?? json['fotoPerfil'] as String?,
-      idServicios: (json['id_servicios'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      fotoPerfil: json['foto_perfil_url'] as String? ?? 
+                  json['fotoPerfilUrl'] as String? ?? 
+                  json['fotoPerfil'] as String?,
+      idServicios: idServicios,
+      experienciaYears: json['experiencia_years'] as int? ?? json['experienciaYears'] as int?,
+      descripcion: json['descripcion'] as String?,
+      ubicacionText: json['ubicacion_text'] as String? ?? json['ubicacionText'] as String?,
     );
   }
 
@@ -58,6 +83,9 @@ class TecnicoModelo {
       'num_calificaciones': numCalificaciones,
       'foto_perfil_url': fotoPerfil,
       'id_servicios': idServicios,
+      'experiencia_years': experienciaYears,
+      'descripcion': descripcion,
+      'ubicacion_text': ubicacionText,
     };
   }
 

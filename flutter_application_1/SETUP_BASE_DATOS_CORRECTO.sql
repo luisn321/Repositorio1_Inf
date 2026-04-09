@@ -49,7 +49,6 @@ CREATE TABLE servicios (
 CREATE TABLE tecnicos (
   id_tecnico INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL,
-  apellido VARCHAR(100),
   email VARCHAR(150) UNIQUE,
   password_hash VARCHAR(255),
   telefono VARCHAR(30),
@@ -116,7 +115,7 @@ CREATE TABLE contrataciones (
   INDEX idx_id_cliente (id_cliente),
   INDEX idx_id_tecnico (id_tecnico),
   INDEX idx_estado (estado),
-  INDEX idx_estado_monto (estado_monto),
+  INDEX idx_estado_monto (estado_monto),  -- ✨ NUEVO: Para queries del técnico
   INDEX idx_fecha_programada (fecha_programada)
 ) ENGINE=InnoDB;
 
@@ -190,3 +189,52 @@ ALTER TABLE pagos ADD CONSTRAINT chk_estado_pago
 CREATE INDEX idx_cliente_contrataciones ON contrataciones(id_cliente, estado);
 CREATE INDEX idx_tecnico_calificaciones ON calificaciones(id_tecnico, puntuacion);
 CREATE INDEX idx_tecnico_monto_propuesto ON contrataciones(id_tecnico, estado_monto);
+ALTER TABLE TECNICOS ADD COLUMN apellido VARCHAR(100) AFTER nombre;
+ALTER TABLE CONTRATACIONES ADD COLUMN ubicacion TEXT AFTER fotos_trabajo_urls;
+
+-- ============================================================
+-- MIGRACIONES PARA FLUJO DE PROPUESTAS
+-- ============================================================
+
+USE servitec;
+
+-- Agregar columnas para propuesta de cambios
+ALTER TABLE contrataciones 
+  ADD COLUMN fecha_propuesta_cambios TIMESTAMP NULL,
+  ADD COLUMN fecha_propuesta_solicitada DATE NULL,
+  ADD COLUMN hora_propuesta_solicitada TIME NULL,
+  ADD COLUMN motivo_cambio TEXT NULL,
+  ADD COLUMN fecha_pago TIMESTAMP NULL,
+  ADD COLUMN monto_pagado DECIMAL(12,2) NULL;
+
+SELECT '✅ Migración completada' AS resultado;
+
+-- ============================================================
+-- TRIGGER: Actualizar estadísticas de técnico al calificar
+-- ============================================================
+-- Cuando se inserta una nueva calificación, automáticamente:
+-- 1. Cuenta el total de calificaciones para ese técnico
+-- 2. Calcula el promedio de puntuaciones
+-- 3. Actualiza los campos en la tabla tecnicos
+-- ============================================================
+
+DELIMITER //
+
+CREATE TRIGGER tr_update_tecnico_stats_on_calificacion
+AFTER INSERT ON calificaciones
+FOR EACH ROW
+BEGIN
+  UPDATE tecnicos
+  SET 
+    num_calificaciones = (
+      SELECT COUNT(*) FROM calificaciones 
+      WHERE id_tecnico = NEW.id_tecnico
+    ),
+    calificacion_promedio = (
+      SELECT AVG(puntuacion) FROM calificaciones 
+      WHERE id_tecnico = NEW.id_tecnico
+    )
+  WHERE id_tecnico = NEW.id_tecnico;
+END //
+
+DELIMITER ;

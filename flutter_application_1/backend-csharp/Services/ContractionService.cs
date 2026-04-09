@@ -2,8 +2,7 @@ using ServitecAPI.DTOs;
 using ServitecAPI.Models;
 using ServitecAPI.Repositories;
 
-namespace ServitecAPI.Services
-{
+namespace ServitecAPI.Services {
     public class ContractionService : IContractionService
     {
         private readonly IContractionRepository _repo;
@@ -110,25 +109,39 @@ namespace ServitecAPI.Services
         {
             try
             {
+                _logger.LogInformation($"📝 [ContractionService.CreateContractionAsync] INICIANDO");
+                _logger.LogInformation($"   ├─ IdCliente: {request.IdCliente}");
+                _logger.LogInformation($"   ├─ IdServicio: {request.IdServicio}");
+                _logger.LogInformation($"   ├─ Descripcion: {request.Descripcion}");
+                _logger.LogInformation($"   └─ FechaEstimada: {request.FechaEstimada}");
+
                 var contraction = new ContractionModel
                 {
                     IdCliente = request.IdCliente,
+                    IdTecnico = request.IdTecnico,  // ✨ Guardar técnico al que se dirige
                     IdServicio = request.IdServicio,
-                    Estado = "solicitada",
+                    Estado = "Pendiente",  // Debe ser 'Pendiente' según BD
                     Descripcion = request.Descripcion,
                     FechaEstimada = request.FechaEstimada,
-                    DetallesCliente = request.DetallesCliente,
-                    HorasSolicitadas = request.HorasSolicitadas,
+                    DetallesCliente = request.DetallesCliente ?? request.Descripcion,
                     HoraSolicitada = request.HoraSolicitada,
                     FotosClienteUrls = request.FotosClienteUrls,
                     Ubicacion = request.Ubicacion
                 };
 
-                return await _repo.CreateAsync(contraction);
+                _logger.LogInformation($"✓ ContractionModel creado. Estado={contraction.Estado}");
+                _logger.LogInformation($"→ Llamando Repository.CreateAsync()...");
+
+                var result = await _repo.CreateAsync(contraction);
+
+                _logger.LogInformation($"✅ ContractionService.CreateAsync retornó ID: {result}");
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error creating contraction: {ex.Message}");
+                _logger.LogError($"❌ ERROR EN ContractionService.CreateContractionAsync: {ex.GetType().Name}");
+                _logger.LogError($"   └─ Mensaje: {ex.Message}");
+                _logger.LogError($"   └─ Stack: {ex.StackTrace}");
                 throw;
             }
         }
@@ -151,12 +164,16 @@ namespace ServitecAPI.Services
                     contraction.Descripcion = request.Descripcion;
                 if (!string.IsNullOrWhiteSpace(request.FotosTrabajoUrls))
                     contraction.FotosTrabajoUrls = request.FotosTrabajoUrls;
-                if (!string.IsNullOrWhiteSpace(request.MontoPropuesto))
-                    contraction.MontoPropuesto = request.MontoPropuesto;
+                if (request.MontoPropuesto.HasValue && request.MontoPropuesto > 0)
+                    contraction.MontoPropuesto = request.MontoPropuesto.ToString();
                 if (!string.IsNullOrWhiteSpace(request.EstadoMonto))
                     contraction.EstadoMonto = request.EstadoMonto;
                 if (!string.IsNullOrWhiteSpace(request.Comentarios))
                     contraction.Comentarios = request.Comentarios;
+                if (request.MontoPagado.HasValue)
+                    contraction.MontoPagado = request.MontoPagado;
+                if (request.FechaPago.HasValue)
+                    contraction.FechaPago = request.FechaPago;
 
                 return await _repo.UpdateAsync(contraction);
             }
@@ -218,29 +235,274 @@ namespace ServitecAPI.Services
             }
         }
 
+        // ✨ NUEVOS: Para flujo de aceptación/rechazo
+        public async Task<bool> RejectContractionAsync(int contractionId, RejectContractionDto request)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.Estado != "Pendiente")
+                    throw new InvalidOperationException("Solo se pueden rechazar solicitudes pendientes");
+
+                // ✨ 'Cancelada' es el estado válido en la BD para solicitudes rechazadas
+                contraction.Estado = "Cancelada";
+                contraction.MotivoCambio = request.Motivo ?? "Sin motivo especificado";
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error rejecting contraction: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> AcceptContractionAsync(int contractionId, AcceptContractionDto request)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.Estado != "Pendiente")
+                    throw new InvalidOperationException("Solo se pueden aceptar solicitudes pendientes");
+
+                // Asignar técnico y marcar como Aceptada
+                contraction.IdTecnico = request.IdTecnico;
+                contraction.Estado = "Aceptada";
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error accepting contraction: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> ProposePropuestaAsync(int contractionId, ProposeAlternativeDto request)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.Estado != "Pendiente")
+                    throw new InvalidOperationException("Solo se puede proponer alternativa en solicitudes pendientes");
+
+                // Técnico es quien propone la alternativa → mantiene 'Pendiente' pero guarda propuesta en BD
+                // (Campo estado_monto podría usarse para tracking, pero lo importante es los datos de propuesta)
+                contraction.FechaPropuestaCambios = DateTime.UtcNow;
+                contraction.FechaPropuestaSolicitada = request.FechaPropuestaSolicitada;
+                contraction.HoraPropuestaSolicitada = request.HoraPropuestaSolicitada;
+                contraction.MotivoCambio = request.MotivoCambio;
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                _logger.LogInformation($"Alternative proposal created for contraction {contractionId}: {request.MotivoCambio}");
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error proposing alternative: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> AcceptPropuestaAsync(int contractionId)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.Estado != "Pendiente" || contraction.FechaPropuestaSolicitada == null)
+                    throw new InvalidOperationException("No hay propuesta alternativa para aceptar");
+
+                // ✨ Aplicar los cambios de la propuesta al registro principal
+                contraction.FechaEstimada = contraction.FechaPropuestaSolicitada;
+                contraction.HoraSolicitada = contraction.HoraPropuestaSolicitada;
+                
+                // ✨ Limpiar campos de propuesta para que no aparezcan más en la UI de seguimiento activo
+                contraction.FechaPropuestaCambios = null;
+                contraction.FechaPropuestaSolicitada = null;
+                contraction.HoraPropuestaSolicitada = null;
+                contraction.MotivoCambio = null;
+
+                // Marcar como 'Aceptada'
+                contraction.Estado = "Aceptada";
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                _logger.LogInformation($"✅ Propuesta aceptada para solicitud {contractionId}. Nueva fecha: {contraction.FechaEstimada}");
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error accepting alternative proposal: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> RejectPropuestaAsync(int contractionId)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.Estado != "Pendiente" || contraction.FechaPropuestaSolicitada == null)
+                    throw new InvalidOperationException("No hay propuesta alternativa para rechazar");
+
+                // ✨ Si el cliente rechaza la propuesta del técnico, la solicitud se CANCELA
+                contraction.Estado = "Cancelada";
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                _logger.LogInformation($"❌ Propuesta rechazada para solicitud {contractionId}. Solicitud cancelada.");
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error rejecting alternative proposal: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> ProposeMountAsync(int contractionId, ProposeMountDto request)
+        {
+            try
+            {
+                if (request.Monto <= 0)
+                    throw new InvalidOperationException("El monto debe ser mayor a 0");
+
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.Estado != "Aceptada")
+                    throw new InvalidOperationException("Solo se puede proponer monto en solicitudes aceptadas");
+
+                contraction.MontoPropuesto = request.Monto.ToString();
+                contraction.EstadoMonto = "Propuesto";
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                var success = await _repo.UpdateAsync(contraction);
+                
+                _logger.LogInformation($"✅ Mount proposed for contraction {contractionId}: ${request.Monto}, EstadoMonto set to 'Propuesto'");
+                
+                if (success)
+                {
+                    // Verificar que se guardó correctamente
+                    var verificacion = await _repo.GetByIdAsync(contractionId);
+                    _logger.LogInformation($"🔍 Verificación: EstadoMonto en BD = '{verificacion?.EstadoMonto}'");
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Error proposing mount: {ex.Message}");
+                throw;
+            }
+        }
+
+        // ✨ NUEVO: Cliente acepta el monto propuesto
+        public async Task<bool> AcceptAmountAsync(int contractionId)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.EstadoMonto != "Propuesto")
+                    throw new InvalidOperationException("No hay monto propuesto para aceptar");
+
+                contraction.EstadoMonto = "Aceptado";
+                contraction.Estado = "En Progreso";  // Avanza al siguiente estado
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                _logger.LogInformation($"Amount accepted for contraction {contractionId}");
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error accepting amount: {ex.Message}");
+                throw;
+            }
+        }
+
+        // ✨ NUEVO: Cliente rechaza el monto propuesto
+        public async Task<bool> RejectAmountAsync(int contractionId, RejectAmountDto request)
+        {
+            try
+            {
+                var contraction = await _repo.GetByIdAsync(contractionId);
+                if (contraction == null)
+                    throw new KeyNotFoundException("Contraction not found");
+
+                if (contraction.EstadoMonto != "Propuesto")
+                    throw new InvalidOperationException("No hay monto propuesto para rechazar");
+
+                // ✨ Cuando el cliente rechaza el monto, la solicitud se cancela (como rechazo sin propuesta)
+                contraction.Estado = "Cancelada";
+                contraction.EstadoMonto = "Rechazado";
+                contraction.MotivoCambio = request.Motivo ?? "Monto rechazado por el cliente";
+                contraction.FechaActualizacion = DateTime.UtcNow;
+
+                _logger.LogInformation($"Amount rejected for contraction {contractionId}: solicitud cancelada");
+                return await _repo.UpdateAsync(contraction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error rejecting amount: {ex.Message}");
+                throw;
+            }
+        }
+
         private ContractionResponse MapToResponse(ContractionModel contraction)
         {
             return new ContractionResponse
             {
                 IdContratacion = contraction.IdContratacion,
                 IdCliente = contraction.IdCliente,
+                NombreCliente = contraction.NombreCliente,
                 IdTecnico = contraction.IdTecnico,
+                NombreTecnico = contraction.NombreTecnico,
+                FotoPerfilCliente = contraction.FotoPerfilCliente,
+                FotoPerfilTecnico = contraction.FotoPerfilTecnico,
                 IdServicio = contraction.IdServicio,
                 Estado = contraction.Estado,
                 FechaSolicitud = contraction.FechaSolicitud,
                 FechaAsignacion = contraction.FechaAsignacion,
                 FechaEstimada = contraction.FechaEstimada,
                 FechaCompletada = contraction.FechaCompletada,
-                Descripcion = contraction.Descripcion,
+                Descripcion = contraction.DetallesCliente ?? contraction.Descripcion,
                 DetallesCliente = contraction.DetallesCliente,
                 HorasSolicitadas = contraction.HorasSolicitadas,
                 HoraSolicitada = contraction.HoraSolicitada,
                 FotosClienteUrls = contraction.FotosClienteUrls,
                 FotosTrabajoUrls = contraction.FotosTrabajoUrls,
-                MontoPropuesto = contraction.MontoPropuesto,
-                EstadoMonto = contraction.EstadoMonto,
+                MontoPropuesto = !string.IsNullOrEmpty(contraction.MontoPropuesto) ? decimal.Parse(contraction.MontoPropuesto) : null,
+                EstadoMonto = contraction.EstadoMonto ?? "Sin Propuesta",
                 Ubicacion = contraction.Ubicacion,
-                Comentarios = contraction.Comentarios
+                Comentarios = contraction.Comentarios,
+                FechaPropuestaCambios = contraction.FechaPropuestaCambios,
+                FechaPropuestaSolicitada = contraction.FechaPropuestaSolicitada,
+                HoraPropuestaSolicitada = contraction.HoraPropuestaSolicitada,
+                MotivoCambio = contraction.MotivoCambio,
+                FechaPago = contraction.FechaPago,
+                MontoPagado = contraction.MontoPagado,
+                PuntuacionCliente = contraction.PuntuacionCliente,
+                ComentarioCliente = contraction.ComentarioCliente,
+                FechaCalificacion = contraction.FechaCalificacion
             };
         }
     }

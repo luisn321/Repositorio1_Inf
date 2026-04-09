@@ -165,19 +165,34 @@ namespace ServitecAPI.Services
             }
         }
 
+        public async Task<bool> UpdateServicesAsync(int technicianId, List<int> serviceIds)
+        {
+            try
+            {
+                return await _repo.UpdateServicesAsync(technicianId, serviceIds);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in UpdateServicesAsync: {ex.Message}");
+                throw;
+            }
+        }
+
         private TechnicianResponse MapToResponse(TechnicianModel technician, List<ServiceDTO> services)
         {
             return new TechnicianResponse
             {
                 IdTecnico = technician.IdTecnico,
                 Nombre = technician.Nombre,
-                Apellido = technician.Apellido,  // ✨ NUEVO
+                Apellido = technician.Apellido,
                 Email = technician.Email,
                 Telefono = technician.Telefono,
                 UbicacionText = technician.UbicacionText,
                 Latitud = technician.Latitud,
                 Longitud = technician.Longitud,
                 TarifaHora = technician.TarifaHora,
+                ExperienciaYears = technician.ExperienciaYears,
+                Descripcion = technician.Descripcion,
                 CalificacionPromedio = technician.CalificacionPromedio,
                 NumCalificaciones = technician.NumCalificaciones,
                 FotoPerfilUrl = technician.FotoPerfilUrl,

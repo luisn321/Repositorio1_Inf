@@ -67,12 +67,36 @@ class ValidadoresServicios {
       return 'La fecha es obligatoria';
     }
     
-    final fecha = DateTime.tryParse(valor);
+    DateTime? fecha;
+    
+    // Intenta parsear formato DD/MM/YYYY
+    if (valor.contains('/')) {
+      final partes = valor.split('/');
+      if (partes.length == 3) {
+        try {
+          final dia = int.parse(partes[0]);
+          final mes = int.parse(partes[1]);
+          final anio = int.parse(partes[2]);
+          fecha = DateTime(anio, mes, dia);
+        } catch (e) {
+          return 'Fecha inválida';
+        }
+      }
+    } else {
+      // Intenta parsear formato ISO (YYYY-MM-DD)
+      fecha = DateTime.tryParse(valor);
+    }
+    
     if (fecha == null) {
       return 'Fecha inválida';
     }
     
-    if (fecha.isBefore(DateTime.now())) {
+    // Comparar solo la fecha (sin hora)
+    final ahora = DateTime.now();
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final fechaSolo = DateTime(fecha.year, fecha.month, fecha.day);
+    
+    if (fechaSolo.isBefore(hoy)) {
       return 'La fecha debe ser en el futuro';
     }
     

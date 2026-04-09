@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace ServitecAPI.DTOs
 {
     public class LoginRequest
     {
-        public string Email { get; set; } = "";
-        public string Password { get; set; } = "";
+        [JsonPropertyName("Correo")]
+        public string Correo { get; set; } = "";
+        
+        [JsonPropertyName("Contrasena")]
+        public string Contrasena { get; set; } = "";
     }
 }

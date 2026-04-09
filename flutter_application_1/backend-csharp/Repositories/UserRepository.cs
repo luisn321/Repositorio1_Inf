@@ -128,9 +128,9 @@ namespace ServitecAPI.Repositories
             {
                 int tecnicoId = await _db.ExecuteScalarAsync<int>(
                     @"INSERT INTO tecnicos (nombre, apellido, email, password_hash, telefono, 
-                      ubicacion_text, latitud, longitud, tarifa_hora, foto_perfil_url, is_active)
+                      ubicacion_text, latitud, longitud, tarifa_hora, descripcion, experiencia_years, foto_perfil_url, is_active)
                       VALUES (@nombre, @apellido, @email, @password, @telefono, 
-                      @ubicacion, @lat, @lng, @tarifa, @foto, 1);
+                      @ubicacion, @lat, @lng, @tarifa, @descripcion, @experiencia, @foto, 1);
                       SELECT LAST_INSERT_ID();",
                     new Dictionary<string, object>
                     {
@@ -143,6 +143,8 @@ namespace ServitecAPI.Repositories
                         { "lat", user.Latitud },
                         { "lng", user.Longitud },
                         { "tarifa", user.TarifaHora ?? 0 },
+                        { "descripcion", user.Descripcion ?? "" },
+                        { "experiencia", user.AnosExperiencia ?? 0 },
                         { "foto", user.FotoPerfilUrl ?? "" }
                     }
                 );
@@ -196,14 +198,27 @@ namespace ServitecAPI.Repositories
                 else
                 {
                     var result = await _db.ExecuteNonQueryAsync(
-                        @"UPDATE tecnicos SET nombre = @nombre, apellido = @apellido, email = @email, 
-                          telefono = @telefono, foto_perfil_url = @foto WHERE id_tecnico = @id",
+                        @"UPDATE tecnicos SET 
+                          nombre = @nombre, 
+                          apellido = @apellido, 
+                          email = @email, 
+                          telefono = @telefono, 
+                          ubicacion_text = @ubicacion,
+                          tarifa_hora = @tarifa,
+                          descripcion = @descripcion,
+                          experiencia_years = @experiencia,
+                          foto_perfil_url = @foto 
+                          WHERE id_tecnico = @id",
                         new Dictionary<string, object>
                         {
                             { "nombre", user.Nombre },
                             { "apellido", user.Apellido ?? "" },
                             { "email", user.Email },
                             { "telefono", user.Telefono ?? "" },
+                            { "ubicacion", user.UbicacionText ?? "" },
+                            { "tarifa", user.TarifaHora ?? 0 },
+                            { "descripcion", user.Descripcion ?? "" },
+                            { "experiencia", user.AnosExperiencia ?? 0 },
                             { "foto", user.FotoPerfilUrl ?? "" },
                             { "id", user.IdUsuario }
                         }
@@ -285,7 +300,7 @@ namespace ServitecAPI.Repositories
                 Email = (string)data["email"],
                 Contrasena = (string)data["password_hash"],
                 Telefono = data.ContainsKey("telefono") ? (string?)data["telefono"] : null,
-                TipoUsuario = "client",
+                TipoUsuario = "cliente",
                 DireccionText = data.ContainsKey("direccion_text") ? (string?)data["direccion_text"] : null,
                 UbicacionText = null,
                 Latitud = Convert.ToDouble(data.ContainsKey("latitud") ? data["latitud"] : 0),
@@ -306,7 +321,7 @@ namespace ServitecAPI.Repositories
                 Email = (string)data["email"],
                 Contrasena = (string)data["password_hash"],
                 Telefono = data.ContainsKey("telefono") ? (string?)data["telefono"] : null,
-                TipoUsuario = "technician",
+                TipoUsuario = "tecnico",
                 DireccionText = null,
                 UbicacionText = data.ContainsKey("ubicacion_text") ? (string?)data["ubicacion_text"] : null,
                 Latitud = Convert.ToDouble(data.ContainsKey("latitud") ? data["latitud"] : 0),

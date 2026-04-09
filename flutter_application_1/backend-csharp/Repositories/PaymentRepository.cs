@@ -125,24 +125,16 @@ namespace ServitecAPI.Repositories
             try
             {
                 int paymentId = await _db.ExecuteScalarAsync<int>(
-                    @"INSERT INTO pagos (id_contratacion, id_tecnico, id_cliente, monto, 
-                      monto_proyectado, estado_monto, metodo_pago, estatus_pago, 
-                      fecha_vencimiento, descripcion_pago, created_at)
-                      VALUES (@contratacion, @tecnico, @cliente, @monto, @monto_proyectado,
-                      @estado_monto, @metodo, @estatus, @vencimiento, @descripcion, NOW());
+                    @"INSERT INTO pagos (id_contratacion, monto, metodo_pago, transaction_ref, estado_pago)
+                      VALUES (@contratacion, @monto, @metodo, @referencia, @estatus);
                       SELECT LAST_INSERT_ID();",
                     new Dictionary<string, object>
                     {
                         { "contratacion", payment.IdContratacion },
-                        { "tecnico", payment.IdTecnico },
-                        { "cliente", payment.IdCliente },
                         { "monto", payment.Monto },
-                        { "monto_proyectado", payment.MontoProyectado },
-                        { "estado_monto", payment.EstadoMonto },
-                        { "metodo", payment.MetodoPago ?? "" },
-                        { "estatus", payment.EstatusPago },
-                        { "vencimiento", payment.FechaVencimiento },
-                        { "descripcion", payment.DescripcionPago ?? "" }
+                        { "metodo", payment.MetodoPago ?? "Tarjeta de Crédito" },
+                        { "referencia", payment.ReferenciaPago ?? "" },
+                        { "estatus", payment.EstatusPago ?? "Pendiente" }
                     }
                 );
 
@@ -263,19 +255,19 @@ namespace ServitecAPI.Repositories
             {
                 IdPago = (int)data["id_pago"],
                 IdContratacion = (int)data["id_contratacion"],
-                IdTecnico = (int)data["id_tecnico"],
-                IdCliente = (int)data["id_cliente"],
+                IdTecnico = 0,  // No existe en tabla pagos
+                IdCliente = 0,  // No existe en tabla pagos
                 Monto = Convert.ToDouble(data["monto"] ?? 0),
-                MontoProyectado = data.ContainsKey("monto_proyectado") ? Convert.ToDouble(data["monto_proyectado"]) : 0,
-                EstadoMonto = (string)data.GetValueOrDefault("estado_monto", "pendiente"),
+                MontoProyectado = 0,  // No existe en tabla pagos
+                EstadoMonto = "pagado",  // No existe en tabla pagos
                 MetodoPago = (string)data.GetValueOrDefault("metodo_pago", ""),
-                EstatusPago = (string)data.GetValueOrDefault("estatus_pago", "sin_pagar"),
+                EstatusPago = (string)data.GetValueOrDefault("estado_pago", "Pendiente"),
                 FechaPago = Convert.ToDateTime(data.GetValueOrDefault("fecha_pago", DateTime.Now)),
-                FechaVencimiento = Convert.ToDateTime(data.GetValueOrDefault("fecha_vencimiento", DateTime.Now)),
-                DescripcionPago = data.ContainsKey("descripcion_pago") ? (string?)data["descripcion_pago"] : null,
-                ReferenciaPago = data.ContainsKey("referencia_pago") ? (string?)data["referencia_pago"] : null,
-                FechaRegistro = Convert.ToDateTime(data.GetValueOrDefault("created_at", DateTime.Now)),
-                FechaActualizacion = data.ContainsKey("updated_at") ? Convert.ToDateTime(data["updated_at"]) : null
+                FechaVencimiento = DateTime.Now,  // No existe en tabla pagos
+                DescripcionPago = null,  // No existe en tabla pagos
+                ReferenciaPago = data.ContainsKey("transaction_ref") ? (string?)data["transaction_ref"] : null,
+                FechaRegistro = Convert.ToDateTime(data.GetValueOrDefault("fecha_pago", DateTime.Now)),
+                FechaActualizacion = null
             };
         }
     }

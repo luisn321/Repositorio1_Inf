@@ -11,5 +11,6 @@ namespace ServitecAPI.Services
         Task<List<TechnicianResponse>> SearchTechniciansAsync(string searchTerm);
         Task<List<TechnicianResponse>> GetByLocationAsync(double latitude, double longitude, double radius);
         Task<bool> UpdateTechnicianAsync(int id, UpdateTechnicianRequest request);
+        Task<bool> UpdateServicesAsync(int technicianId, List<int> serviceIds);
     }
 }

@@ -15,5 +15,6 @@ namespace ServitecAPI.Repositories
         Task<bool> DeleteAsync(int id);
         Task<bool> UpdateRatingAsync(int id, double nuevoPromedio, int numCalificaciones);
         Task<List<ServiceDTO>> GetServicesAsync(int technicianId);
+        Task<bool> UpdateServicesAsync(int technicianId, List<int> serviceIds);
     }
 }

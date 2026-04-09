@@ -14,14 +14,14 @@ class ServicioAutenticacion {
   final _almacenamientoSeguro = AlmacenamientoSeguroServicio();
 
   /// Inicia sesión con correo y contraseña
-  /// Retorna [UsuarioModelo] si tiene éxito
+  /// Retorna [UsuarioModelo] con todos los datos del usuario
   /// Lanza excepción si falla
   Future<UsuarioModelo> iniciarSesion({
     required String correo,
     required String contrasena,
   }) async {
     try {
-      print('📍 Iniciando sesión con: $correo');
+      print('🔐 Iniciando sesión con: $correo');
 
       final solicitud = SolicitudAutenticacionModelo(
         correo: correo,
@@ -53,17 +53,12 @@ class ServicioAutenticacion {
           correo: respuestaAuth.correo,
         );
 
-        print('✅ Sesión iniciada exitosamente');
-        return UsuarioModelo(
-          id: respuestaAuth.usuarioId,
-          nombre: respuestaAuth.nombre,
-          apellido: '',
-          correo: respuestaAuth.correo,
-          tipoUsuario: respuestaAuth.tipoUsuario,
-          telefono: '',
-          latitud: respuestaAuth.latitud ?? 0,
-          longitud: respuestaAuth.longitud ?? 0,
-        );
+        print('✅ Sesión iniciada. Obteniendo datos completos del usuario...');
+        
+        // Obtener datos completos del usuario
+        final usuarioCompleto = await _obtenerDatosPerfilCompleto(respuestaAuth.token);
+        
+        return usuarioCompleto;
       } else if (respuesta.statusCode == 400) {
         final error = jsonDecode(respuesta.body);
         throw Exception(error['error'] ?? 'Error al iniciar sesión');
@@ -72,6 +67,33 @@ class ServicioAutenticacion {
       }
     } catch (e) {
       print('❌ Error en iniciarSesion: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtiene los datos completos del perfil del usuario autenticado
+  Future<UsuarioModelo> _obtenerDatosPerfilCompleto(String token) async {
+    try {
+      final respuesta = await http.get(
+        Uri.parse('$_urlBase/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('📡 Respuesta perfil completo: ${respuesta.statusCode}');
+      print('📄 Body: ${respuesta.body}');
+
+      if (respuesta.statusCode == 200) {
+        final datos = jsonDecode(respuesta.body);
+        print('✅ Datos completos obtenidos: $datos');
+        return UsuarioModelo.desdeJson(datos);
+      } else {
+        throw Exception('Error al obtener perfil: ${respuesta.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error obteniendo perfil completo: $e');
       rethrow;
     }
   }
@@ -236,6 +258,76 @@ class ServicioAutenticacion {
     } catch (e) {
       print('Error obteniendo token: $e');
       return null;
+    }
+  }
+
+  /// Actualiza el perfil del usuario
+  /// Solo actualiza los campos que se pasan
+  /// Retorna el perfil completo actualizado
+  Future<UsuarioModelo> actualizarPerfil({
+    required int usuarioId,
+    required bool esTecnico,
+    String? nombre,
+    String? apellido,
+    String? correo,
+    String? telefono,
+    String? ubicacion,
+    double? tarifa,
+    String? descripcion,
+    int? anosExperiencia,
+    String? contrasenaActual,
+    String? contrasenaNueva,
+    String? fotoPerfilUrl,
+  }) async {
+    try {
+      print('🔄 Actualizando perfil del usuario $usuarioId...');
+
+      final token = await _almacenamientoSeguro.obtenerToken();
+      if (token == null) {
+        throw Exception('No hay token disponible');
+      }
+
+      final endpoint = esTecnico ? 'technician' : 'client';
+      final datos = {
+        'id': usuarioId,
+        if (nombre != null) 'nombre': nombre,
+        if (apellido != null) 'apellido': apellido,
+        if (correo != null) 'correo': correo,
+        if (telefono != null) 'telefono': telefono,
+        if (ubicacion != null) 'ubicacion': ubicacion,
+        if (tarifa != null) 'tarifaHora': tarifa,
+        if (descripcion != null) 'descripcion': descripcion,
+        if (anosExperiencia != null) 'anosExperiencia': anosExperiencia,
+        if (contrasenaActual != null) 'contrasenaActual': contrasenaActual,
+        if (contrasenaNueva != null) 'contrasenaNueva': contrasenaNueva,
+        if (fotoPerfilUrl != null) 'fotoPerfilUrl': fotoPerfilUrl,
+      };
+
+      final respuesta = await http.put(
+        Uri.parse('$_urlBase/update-profile/$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(datos),
+      );
+
+      print('📡 Respuesta actualización: ${respuesta.statusCode}');
+      print('📄 Body: ${respuesta.body}');
+
+      if (respuesta.statusCode == 200) {
+        print('✅ Perfil actualizado. Obteniendo datos completos...');
+        
+        // Obtener datos completos del usuario actualizado
+        final usuarioCompleto = await _obtenerDatosPerfilCompleto(token);
+        return usuarioCompleto;
+      } else {
+        throw Exception('Error al actualizar perfil: ${respuesta.body}');
+      }
+    } catch (e) {
+      print('❌ Error actualizando perfil: $e');
+      rethrow;
     }
   }
 

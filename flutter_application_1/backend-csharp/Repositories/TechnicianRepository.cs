@@ -255,26 +255,58 @@ namespace ServitecAPI.Repositories
             }
         }
 
+        public async Task<bool> UpdateServicesAsync(int technicianId, List<int> serviceIds)
+        {
+            try
+            {
+                // 1. Eliminar asociaciones actuales
+                await _db.ExecuteNonQueryAsync(
+                    "DELETE FROM tecnico_servicio WHERE id_tecnico = @id",
+                    new Dictionary<string, object> { { "id", technicianId } }
+                );
+
+                // 2. Insertar nuevas asociaciones
+                if (serviceIds != null && serviceIds.Count > 0)
+                {
+                    foreach (var serviceId in serviceIds)
+                    {
+                        await _db.ExecuteNonQueryAsync(
+                            "INSERT INTO tecnico_servicio (id_tecnico, id_servicio) VALUES (@tech, @service)",
+                            new Dictionary<string, object> { { "tech", technicianId }, { "service", serviceId } }
+                        );
+                    }
+                }
+
+                _logger.LogInformation($"Servicios actualizados para técnico {technicianId}. Total: {serviceIds?.Count ?? 0}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error actualizando servicios del técnico {technicianId}: {ex.Message}");
+                return false;
+            }
+        }
+
         private TechnicianModel MapToTechnicianModel(Dictionary<string, object> data)
         {
             return new TechnicianModel
             {
                 IdTecnico = (int)data["id_tecnico"],
-                Nombre = (string)data["nombre"],
-                Apellido = data.ContainsKey("apellido") ? (string?)data["apellido"] : null,  // ✨ NUEVO
-                Email = (string)data["email"],
-                Contrasena = (string)data["password_hash"],
-                Telefono = data.ContainsKey("telefono") ? (string?)data["telefono"] : null,
-                UbicacionText = data.ContainsKey("ubicacion_text") ? (string?)data["ubicacion_text"] : null,
-                Latitud = Convert.ToDouble(data["latitud"] ?? 0),
-                Longitud = Convert.ToDouble(data["longitud"] ?? 0),
-                TarifaHora = data.ContainsKey("tarifa_hora") ? Convert.ToDouble(data["tarifa_hora"]) : null,
-                ExperienciaYears = data.ContainsKey("experiencia_years") ? (int?)data["experiencia_years"] : null,
-                Descripcion = data.ContainsKey("descripcion") ? (string?)data["descripcion"] : null,
-                FotoPerfilUrl = data.ContainsKey("foto_perfil_url") ? (string?)data["foto_perfil_url"] : null,
-                CalificacionPromedio = Convert.ToDouble(data.ContainsKey("calificacion_promedio") ? data["calificacion_promedio"] : 0),
-                NumCalificaciones = (int)(data.ContainsKey("num_calificaciones") ? data["num_calificaciones"] : 0),
-                FechaRegistro = Convert.ToDateTime(data.ContainsKey("created_at") ? data["created_at"] : DateTime.Now)
+                Nombre = data["nombre"] != DBNull.Value ? (string)data["nombre"] : "",
+                Apellido = data.ContainsKey("apellido") && data["apellido"] != DBNull.Value ? (string)data["apellido"] : null,
+                Email = data.ContainsKey("email") && data["email"] != DBNull.Value ? (string)data["email"] : "",
+                Contrasena = data.ContainsKey("password_hash") && data["password_hash"] != DBNull.Value ? (string)data["password_hash"] : "",
+                Telefono = data.ContainsKey("telefono") && data["telefono"] != DBNull.Value ? (string)data["telefono"] : null,
+                UbicacionText = data.ContainsKey("ubicacion_text") && data["ubicacion_text"] != DBNull.Value ? (string)data["ubicacion_text"] : null,
+                Latitud = data.ContainsKey("latitud") && data["latitud"] != DBNull.Value ? Convert.ToDouble(data["latitud"]) : 0,
+                Longitud = data.ContainsKey("longitud") && data["longitud"] != DBNull.Value ? Convert.ToDouble(data["longitud"]) : 0,
+                TarifaHora = data.ContainsKey("tarifa_hora") && data["tarifa_hora"] != DBNull.Value ? Convert.ToDouble(data["tarifa_hora"]) : null,
+                ExperienciaYears = data.ContainsKey("experiencia_years") && data["experiencia_years"] != DBNull.Value ? (int?)data["experiencia_years"] : null,
+                Descripcion = data.ContainsKey("descripcion") && data["descripcion"] != DBNull.Value ? (string)data["descripcion"] : null,
+                FotoPerfilUrl = data.ContainsKey("foto_perfil_url") && data["foto_perfil_url"] != DBNull.Value ? (string)data["foto_perfil_url"] : null,
+                CalificacionPromedio = data.ContainsKey("calificacion_promedio") && data["calificacion_promedio"] != DBNull.Value ? Convert.ToDouble(data["calificacion_promedio"]) : 0,
+                NumCalificaciones = data.ContainsKey("num_calificaciones") && data["num_calificaciones"] != DBNull.Value ? (int)data["num_calificaciones"] : 0,
+                FechaRegistro = data.ContainsKey("created_at") && data["created_at"] != DBNull.Value ? Convert.ToDateTime(data["created_at"]) : DateTime.Now
             };
         }
     }

@@ -3,5 +3,6 @@
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.enableRoslynAnalyzers": true,
   "omnisharp.analyzeOpenDocumentsOnly": false,
-  "dotnet.defaultSolution": "flutter_application_1.sln"
+  "dotnet.defaultSolution": "flutter_application_1.sln",
+  "cmake.sourceDirectory": "C:/Users/Luis Infante/Desktop/5TO SEMESTRE/Taller de base de datos/Unidad 6/AppServTrabajo/flutter_application_1/linux"
 }

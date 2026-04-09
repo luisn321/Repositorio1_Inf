@@ -10,8 +10,12 @@ class UsuarioModelo {
   final double latitud;
   final double longitud;
   final String? fotoPerfilUrl;
+  final String? direccionTexto; // Para clientes - dirección
+  final String? ubicacionTexto; // Para técnicos - ubicación
   final double? tarifaHora; // Solo para técnicos
   final double? calificacionPromedio; // Solo para técnicos
+  final String? descripcion; // Solo para técnicos - descripción de especialidad
+  final int? anosExperiencia; // Solo para técnicos - años de experiencia
 
   UsuarioModelo({
     required this.id,
@@ -23,24 +27,126 @@ class UsuarioModelo {
     required this.latitud,
     required this.longitud,
     this.fotoPerfilUrl,
+    this.direccionTexto,
+    this.ubicacionTexto,
     this.tarifaHora,
     this.calificacionPromedio,
+    this.descripcion,
+    this.anosExperiencia,
   });
 
   /// Crea una instancia desde JSON (respuesta del servidor)
   factory UsuarioModelo.desdeJson(Map<String, dynamic> json) {
+    print('\n🔬 PARSEANDO USUARIO MODELO');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    // Mapeo flexible para diferentes formatos de respuesta del servidor
+    int id = json['IdUsuario'] ?? json['UserId'] ?? json['IdUser'] ?? json['id'] ?? json['id_usuario'] ?? 0;
+    String nombre = json['Nombre'] ?? json['Name'] ?? json['nombre'] ?? '';
+    String apellido = json['Apellido'] ?? json['LastName'] ?? json['apellido'] ?? '';
+    String correo = json['Correo'] ?? json['Email'] ?? json['email'] ?? '';
+    
+    // 🔧 MEJORADO: Mapeo más robusto del tipoUsuario
+    String tipoUsuario = (json['TipoUsuario'] ?? 
+        json['UserType'] ?? 
+        json['tipo_usuario'] ?? 
+        json['tipoUsuario'] ?? 
+        'cliente').toString().toLowerCase().trim();
+    
+    // Normalizar valores comunes
+    if (tipoUsuario.isEmpty || tipoUsuario == 'null') {
+      tipoUsuario = 'cliente';
+    }
+    
+    print("📌 ID: $id");
+    print("📌 Nombre: $nombre");
+    print("📌 Apellido: $apellido");
+    print("📌 Correo: $correo");
+    print("📌 TipoUsuario: $tipoUsuario");
+    
+    String telefono = json['Telefono'] ?? json['Phone'] ?? json['telefono'] ?? '';
+    print("📌 Teléfono: $telefono");
+    
+    double latitud = 0;
+    double longitud = 0;
+    try {
+      latitud = (json['Latitud'] ?? json['Latitude'] ?? json['latitud'] ?? 0).toDouble();
+      longitud = (json['Longitud'] ?? json['Longitude'] ?? json['longitud'] ?? 0).toDouble();
+    } catch (e) {
+      print('Error parsing latitud/longitud: $e');
+    }
+    
+    print("📌 Latitud: $latitud");
+    print("📌 Longitud: $longitud");
+    
+    // Tarifa
+    double? tarifaHora;
+    try {
+      if (json['TarifaHora'] != null) {
+        tarifaHora = double.tryParse(json['TarifaHora'].toString());
+      } else if (json['tarifa_hora'] != null) {
+        tarifaHora = double.tryParse(json['tarifa_hora'].toString());
+      }
+    } catch (e) {
+      print('❌ Error parsing tarifaHora: $e');
+    }
+    print("📌 TarifaHora: $tarifaHora (raw: TarifaHora=${json['TarifaHora']}, tarifa_hora=${json['tarifa_hora']})");
+    
+    // CalificacionPromedio
+    double? calificacionPromedio;
+    try {
+      if (json['CalificacionPromedio'] != null) {
+        calificacionPromedio = double.tryParse(json['CalificacionPromedio'].toString());
+      } else if (json['calificacion_promedio'] != null) {
+        calificacionPromedio = double.tryParse(json['calificacion_promedio'].toString());
+      }
+    } catch (e) {
+      print('❌ Error parsing calificacionPromedio: $e');
+    }
+    print("📌 CalificacionPromedio: $calificacionPromedio (raw: ${json['CalificacionPromedio']} / ${json['calificacion_promedio']})");
+    
+    String? descripcion = json['Descripcion'] ?? json['descripcion'];
+    print("📌 Descripcion: $descripcion (raw: Descripcion=${json['Descripcion']}, descripcion=${json['descripcion']})");
+    
+    int? anosExperiencia;
+    try {
+      if (json['AnosExperiencia'] != null) {
+        anosExperiencia = int.tryParse(json['AnosExperiencia'].toString());
+      } else if (json['anos_experiencia'] != null) {
+        anosExperiencia = int.tryParse(json['anos_experiencia'].toString());
+      }
+    } catch (e) {
+      print('❌ Error parsing anosExperiencia: $e');
+    }
+    print("📌 AnosExperiencia: $anosExperiencia (raw: ${json['AnosExperiencia']} / ${json['anos_experiencia']})");
+    
+    String? fotoPerfilUrl = json['FotoPerfilUrl'] ?? json['foto_perfil_url'] ?? json['fotoPerfilUrl'];
+    print("📌 FotoPerfilUrl: $fotoPerfilUrl");
+    
+    String? direccionTexto = json['DireccionTexto'] ?? json['direccion_text'] ?? json['direccionTexto'];
+    print("📌 DireccionTexto: $direccionTexto");
+    
+    String? ubicacionTexto = json['UbicacionTexto'] ?? json['ubicacion_text'] ?? json['ubicacionTexto'];
+    print("📌 UbicacionTexto: $ubicacionTexto");
+    
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
     return UsuarioModelo(
-      id: json['UserId'] ?? json['IdUser'] ?? json['id'] ?? 0,
-      nombre: json['Name'] ?? json['nombre'] ?? '',
-      apellido: json['LastName'] ?? json['apellido'] ?? '',
-      correo: json['Email'] ?? json['email'] ?? '',
-      tipoUsuario: json['UserType'] ?? json['tipo_usuario'] ?? 'cliente',
-      telefono: json['Phone'] ?? json['telefono'] ?? '',
-      latitud: (json['Latitude'] ?? json['latitud'] ?? 0).toDouble(),
-      longitud: (json['Longitude'] ?? json['longitud'] ?? 0).toDouble(),
-      fotoPerfilUrl: json['FotoPerfilUrl'] ?? json['foto_perfil_url'],
-      tarifaHora: json['TarifaHora'] != null ? double.parse(json['TarifaHora'].toString()) : null,
-      calificacionPromedio: json['CalificacionPromedio'] != null ? double.parse(json['CalificacionPromedio'].toString()) : null,
+      id: id,
+      nombre: nombre,
+      apellido: apellido,
+      correo: correo,
+      tipoUsuario: tipoUsuario,
+      telefono: telefono,
+      latitud: latitud,
+      longitud: longitud,
+      fotoPerfilUrl: fotoPerfilUrl,
+      direccionTexto: direccionTexto,
+      ubicacionTexto: ubicacionTexto,
+      tarifaHora: tarifaHora,
+      calificacionPromedio: calificacionPromedio,
+      descripcion: descripcion,
+      anosExperiencia: anosExperiencia,
     );
   }
 
@@ -56,8 +162,12 @@ class UsuarioModelo {
       'latitud': latitud,
       'longitud': longitud,
       'fotoPerfilUrl': fotoPerfilUrl,
+      'direccionTexto': direccionTexto,
+      'ubicacionTexto': ubicacionTexto,
       'tarifaHora': tarifaHora,
       'calificacionPromedio': calificacionPromedio,
+      'descripcion': descripcion,
+      'anosExperiencia': anosExperiencia,
     };
   }
 
@@ -65,14 +175,13 @@ class UsuarioModelo {
   String obtenerNombreCompleto() => '$nombre $apellido';
 
   /// Indica si el usuario es técnico
-  /// Acepta tanto "tecnico" (español) como "technician" (inglés del backend)
+
   bool esTecnico() {
     final tipo = tipoUsuario.toLowerCase();
     return tipo == 'tecnico' || tipo == 'technician';
   }
 
   /// Indica si el usuario es cliente
-  /// Acepta tanto "cliente" (español) como "client" (inglés del backend)
   bool esCliente() {
     final tipo = tipoUsuario.toLowerCase();
     return tipo == 'cliente' || tipo == 'client';

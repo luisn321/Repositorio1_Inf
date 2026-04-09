@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ServitecAPI.DTOs
 {
     public class GetPaymentRequest
@@ -11,11 +13,23 @@ namespace ServitecAPI.DTOs
 
     public class CreatePaymentRequest
     {
+        [JsonPropertyName("idContratacion")]
         public int IdContratacion { get; set; }
+
+        [JsonPropertyName("monto")]
         public double Monto { get; set; }
+
+        [JsonPropertyName("montoProyectado")]
         public double? MontoProyectado { get; set; }
+
+        [JsonPropertyName("metodoPago")]
         public string? MetodoPago { get; set; }
+
+        [JsonPropertyName("descripcionPago")]
         public string? DescripcionPago { get; set; }
+
+        [JsonPropertyName("transactionRef")]
+        public string? TransactionRef { get; set; }  // ✨ NUEVO: Referencia de transacción
     }
 
     public class UpdatePaymentStatusRequest

@@ -81,18 +81,23 @@ class ServicioTecnicos {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) {
-        throw Exception('No authorization token found');
+        throw Exception('❌ Token no disponible - Usuario no autenticado');
       }
 
-      debugPrint('📡 [ServicioTecnicos] GET $_urlBase/technicians?serviceId=$idServicio');
+      final url = '$_urlBase/technicians?serviceId=$idServicio';
+      debugPrint('📡 [ServicioTecnicos] GET $url');
+      debugPrint('🔍 Buscando técnicos del servicio ID: $idServicio');
 
       final respuesta = await http.get(
-        Uri.parse('$_urlBase/technicians?serviceId=$idServicio'),
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       ).timeout(const Duration(seconds: 30));
+
+      debugPrint('📊 Status: ${respuesta.statusCode}');
+      debugPrint('📦 Response length: ${respuesta.body.length}');
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
@@ -101,11 +106,15 @@ class ServicioTecnicos {
             .toList();
         debugPrint('✅ Obtenidos ${tecnicos.length} técnicos para servicio $idServicio');
         return tecnicos;
+      } else if (respuesta.statusCode == 401) {
+        throw Exception('❌ Token inválido o expirado (401)');
+      } else if (respuesta.statusCode == 500) {
+        throw Exception('❌ Error del servidor: ${respuesta.body}');
       } else {
-        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+        throw Exception('❌ Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerTecnicosPorServicio: $e');
+      debugPrint('❌ Excepción en obtenerTecnicosPorServicio: $e');
       rethrow;
     }
   }
@@ -155,12 +164,15 @@ class ServicioTecnicos {
   Future<List<TecnicoModelo>> buscarTecnicosPorNombre(String nombreBusqueda) async {
     try {
       final token = await _almacenamiento.obtenerToken();
+      debugPrint('🔑 Token obtenido: ${token != null ? 'Sí' : 'No'}');
       if (token == null) {
-        throw Exception('No authorization token found');
+        throw Exception('❌ Token no disponible - Usuario no autenticado');
       }
 
-      final url = '$_urlBase/technicians/search?name=${Uri.encodeComponent(nombreBusqueda)}';
-      debugPrint('📡 [ServicioTecnicos] GET $url');
+      final nombreCodificado = Uri.encodeComponent(nombreBusqueda);
+      final url = '$_urlBase/technicians/search?q=$nombreCodificado';
+      debugPrint('📡 [ServicioTecnicos] Buscando: "$nombreBusqueda"');
+      debugPrint('📡 URL completa: $url');
 
       final respuesta = await http.get(
         Uri.parse(url),
@@ -170,6 +182,9 @@ class ServicioTecnicos {
         },
       ).timeout(const Duration(seconds: 30));
 
+      debugPrint('📊 Status: ${respuesta.statusCode}');
+      debugPrint('📦 Response: ${respuesta.body}');
+
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
         final tecnicos = datos
@@ -177,11 +192,15 @@ class ServicioTecnicos {
             .toList();
         debugPrint('✅ Búsqueda encontró ${tecnicos.length} técnicos');
         return tecnicos;
+      } else if (respuesta.statusCode == 401) {
+        throw Exception('❌ Token inválido o expirado (401)');
+      } else if (respuesta.statusCode == 500) {
+        throw Exception('❌ Error del servidor: ${respuesta.body}');
       } else {
-        throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
+        throw Exception('❌ Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en buscarTecnicosPorNombre: $e');
+      debugPrint('❌ Excepción en buscarTecnicosPorNombre: $e');
       rethrow;
     }
   }

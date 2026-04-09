@@ -1,5 +1,6 @@
 using ServitecAPI.Services;
 using ServitecAPI.Repositories;
+using ServitecAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
+// Configurar Cloudinary
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+
 // Registrar Data Access Layer
 builder.Services.AddScoped<DatabaseService>();
 
@@ -24,6 +29,7 @@ builder.Services.AddScoped<ITechnicianRepository, TechnicianRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<IContractionRepository, ContractionRepository>();
+builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 
 // Registrar Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -31,6 +37,9 @@ builder.Services.AddScoped<ITechnicianService, TechnicianService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IContractionService, ContractionService>();
+builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<IImageUploadService, CloudinaryService>(); // ✨ NUEVO
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

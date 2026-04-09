@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_icons.dart';
 import '../modelos/contratacion_modelo.dart';
 import '../servicios_red/servicio_contrataciones.dart';
 
@@ -40,9 +41,12 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Solicitudes'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppIcons.darkGreen,
+        elevation: 2,
         bottom: TabBar(
           controller: _controladorTabs,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
             Tab(text: 'Todas', icon: Icon(Icons.list)),
             Tab(text: 'Solicitadas', icon: Icon(Icons.pending)),
@@ -64,13 +68,34 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error, color: Colors.red, size: 48),
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.red.shade400,
+                    size: 64,
+                  ),
                   const SizedBox(height: 16),
-                  Text('Error: ${snapshot.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
+                  Text(
+                    'Error al cargar solicitudes',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
                     onPressed: _cargarContrataciones,
-                    child: const Text('Reintentar'),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppIcons.darkGreen,
+                    ),
                   ),
                 ],
               ),
@@ -82,24 +107,19 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
           return TabBarView(
             controller: _controladorTabs,
             children: [
-              // Pestaña: Todas
               _construirListaContrataciones(context, contrataciones),
-              // Pestaña: Solicitadas
               _construirListaContrataciones(
                 context,
                 _filtrarPorEstado(contrataciones, 'solicitada'),
               ),
-              // Pestaña: En Proceso
               _construirListaContrataciones(
                 context,
                 _filtrarPorEstado(contrataciones, 'en_proceso'),
               ),
-              // Pestaña: Completadas
               _construirListaContrataciones(
                 context,
                 _filtrarPorEstado(contrataciones, 'completada'),
               ),
-              // Pestaña: Canceladas
               _construirListaContrataciones(
                 context,
                 _filtrarPorEstado(contrataciones, 'cancelada'),
@@ -107,14 +127,6 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
             ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navegar a pantalla de crear solicitud
-          debugPrint('Crear nueva solicitud');
-        },
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -130,15 +142,16 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
           children: [
             Icon(
               Icons.inbox_outlined,
-              size: 64,
-              color: Colors.grey.shade300,
+              size: 80,
+              color: AppIcons.darkGreen.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 16),
             Text(
               'No hay solicitudes',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
               ),
             ),
           ],
@@ -147,6 +160,7 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: contrataciones.length,
       itemBuilder: (context, index) {
         final contratacion = contrataciones[index];
@@ -161,54 +175,147 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
   ) {
     final colorEstado = _obtenerColorEstado(contratacion.estado);
     final iconoEstado = _obtenerIconoEstado(contratacion.estado);
+    final esMovil = MediaQuery.of(context).size.width < 600;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: ListTile(
-        leading: Icon(
-          iconoEstado,
-          color: colorEstado,
-          size: 32,
-        ),
-        title: Text('Solicitud #${contratacion.idContratacion}'),
-        subtitle: Column(
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: esMovil ? 12 : 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppIcons.darkGreen.withValues(alpha: 0.2), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
-            Text(
-              contratacion.descripcion ?? 'Sin descripción',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 16,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Estado: ${contratacion.estado}',
-                  style: TextStyle(
-                    color: colorEstado,
-                    fontWeight: FontWeight.w500,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Solicitud #${contratacion.idContratacion}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppIcons.darkGreen,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        contratacion.descripcion ?? 'Sin descripción',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (contratacion.montoPropuesto != null)
-                  Text(
-                    '\$${contratacion.montoPropuesto!.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
+                const SizedBox(width: 12),
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorEstado.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(iconoEstado, color: colorEstado, size: 28),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorEstado.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        contratacion.estado.toUpperCase(),
+                        style: TextStyle(
+                          color: colorEstado,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 1,
+              color: AppIcons.darkGreen.withValues(alpha: 0.1),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (contratacion.montoPropuesto != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Monto',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '\$${contratacion.montoPropuesto!.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: AppIcons.darkGreen,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Estado',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      contratacion.estado,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: colorEstado,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ],
         ),
-        trailing: const Icon(Icons.arrow_forward),
-        onTap: () {
-          // TODO: Navegar a detalle
-          debugPrint('Tap en contratación: ${contratacion.idContratacion}');
-        },
       ),
     );
   }
@@ -217,16 +324,14 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
     switch (estado) {
       case 'solicitada':
         return Colors.orange;
-      case 'asignada':
-        return Colors.blue;
       case 'en_proceso':
-        return Colors.purple;
+        return Colors.blue;
       case 'completada':
         return Colors.green;
       case 'cancelada':
         return Colors.red;
       default:
-        return Colors.grey;
+        return AppIcons.darkGreen;
     }
   }
 
@@ -234,8 +339,6 @@ class _PantallaSolicitudesState extends State<PantallaSolicitudes>
     switch (estado) {
       case 'solicitada':
         return Icons.pending;
-      case 'asignada':
-        return Icons.assignment;
       case 'en_proceso':
         return Icons.hourglass_bottom;
       case 'completada':

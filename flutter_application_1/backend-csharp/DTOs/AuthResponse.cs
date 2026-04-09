@@ -3,12 +3,11 @@ namespace ServitecAPI.DTOs
     public class AuthResponse
     {
         public string Token { get; set; } = "";
-        public string UserType { get; set; } = "";
-        public int UserId { get; set; }
-        public int? IdUser { get; set; } // Verificar con frontend lo que espera
-        public string Name { get; set; } = "";
-        public string Email { get; set; } = "";
-        public double? Latitude { get; set; }
-        public double? Longitude { get; set; }
+        public string TipoUsuario { get; set; } = "";
+        public int IdUsuario { get; set; }
+        public string Nombre { get; set; } = "";
+        public string Correo { get; set; } = "";
+        public double? Latitud { get; set; }
+        public double? Longitud { get; set; }
     }
 }

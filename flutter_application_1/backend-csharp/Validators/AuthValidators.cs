@@ -29,7 +29,7 @@ namespace ServitecAPI.Validators
 
         public static string GetValidationMessage()
         {
-            return "Password must be at least 6 characters, with at least one uppercase letter and one digit.";
+            return "La contraseña debe tener al menos 6 caracteres, incluir al menos una mayúscula y un dígito.";
         }
     }
 
@@ -43,5 +43,6 @@ namespace ServitecAPI.Validators
             var cleanPhone = Regex.Replace(phone, @"\D", "");
             return cleanPhone.Length >= 10;
         }
+        
     }
 }

@@ -1,0 +1,150 @@
+@startuml Servitec_Deployment_Diagram
+!define TECH_COLOR #FF6B6B
+!define DB_COLOR #4ECDC4
+!define CLIENT_COLOR #95E1D3
+
+skinparam backgroundColor #F8F9FA
+skinparam component {
+  BackgroundColor #FFEAA7
+  BorderColor #DDA15E
+  FontColor #333333
+}
+
+skinparam database {
+  BackgroundColor #DDA15E
+  BorderColor #9D4EDD
+}
+
+' ========== NODOS CLIENTE ==========
+node "📱 Smartphone Cliente\n[Android/iOS]" as ClientNode #CLIENT_COLOR {
+    component [Flutter App] as ClientApp
+    component [UI Screens\n- HomeCliente\n- PantallaListaTecnicos\n- PantallaCrearSolicitud] as ClientUI
+    database [Local Storage\nTokens + Cache] as ClientCache
+}
+
+' ========== NODOS TÉCNICO ==========
+node "📱 Smartphone Técnico\n[Android/iOS]" as TechNode #CLIENT_COLOR {
+    component [Flutter App] as TechApp
+    component [UI Screens\n- HomeTecnico\n- Buscar Trabajos\n- Mis Contratos] as TechUI
+    database [Local Storage\nTokens + Cache] as TechCache
+}
+
+' ========== NODO BACKEND ==========
+node "🖥️ Backend Server\n[ASP.NET Core 6.0]\nPort 3000" as ServerNode #TECH_COLOR {
+    component [API Controllers] as Controllers {
+        component [AuthController]
+        component [TechnicianController]
+        component [ContractionController]
+        component [PaymentController]
+        component [ServiceController]
+    }
+    
+    component [Business Logic] as Services {
+        component [AuthService]
+        component [TechnicianService]
+        component [ContractionService]
+        component [PaymentService]
+    }
+    
+    component [Data Access] as Repos {
+        component [TechnicianRepository]
+        component [ContractionRepository]
+        component [PaymentRepository]
+        component [ClientRepository]
+    }
+}
+
+' ========== NODO BASE DE DATOS ==========
+node "🗄️ Database Server\n[MySQL 8.0]\nPort 3306" as DatabaseNode #DB_COLOR {
+    database [servitec Database] {
+        [clientes]
+        [tecnicos]
+        [servicios]
+        [tecnico_servicio]
+        [contrataciones]
+        [pagos]
+        [calificaciones]
+    }
+}
+
+' ========== NODO OPCIONAL WEB ==========
+node "🌐 Browser Admin\n[Web]\n(Opcional)" as WebNode #CLIENT_COLOR {
+    component [Flutter Web UI] as WebUI
+    component [Dashboard\nEstadísticas y Reportes] as Dashboard
+}
+
+' ========== CONEXIONES PRINCIPALES ==========
+ClientApp --> Controllers: HTTP/REST\nJSON + JWT\nPOST/GET /api/*\n(HTTPS en producción)
+TechApp --> Controllers: HTTP/REST\nJSON + JWT\nPOST/GET /api/*
+
+Controllers --> Services: Lógica de Negocio
+
+Services --> Repos: Operaciones\nDATA
+
+Repos --> DatabaseNode: TCP/IP\nMySQL Protocol\nCadem conexión:\nServer=localhost;\nDatabase=servitec
+
+WebUI --> Controllers: HTTP/REST\nJSON\n(Panel Administrativo)
+
+' ========== NOTAS EXPLICATIVAS ==========
+note on link between ClientApp and Controllers
+  Protocolo: HTTP/REST
+  Autenticación: Bearer JWT Token
+  Datos: JSON
+  Conexión: HTTPS (encriptada)
+end note
+
+note on link between Controllers and Services
+  Patrón: Repository Pattern
+  Arquitectura: Layered Architecture
+  Encapsulación de lógica
+end note
+
+note on link between Repos and DatabaseNode
+  Conexión directa solo backend
+  Pool de conexiones
+  Queries optimizadas con índices
+  Restricciones de firewall
+end note
+
+note right of ClientNode
+  Acceso desde cualquier lugar
+  WiFi o datos móviles
+  Almacenamiento seguro local (JWT)
+end note
+
+note right of TechNode
+  Mismo aplicativo que cliente
+  Diferentes pantallas según rol
+  Notificaciones en tiempo real
+end note
+
+note right of ServerNode
+  Lógica centralizada
+  Valida autenticación
+  Orquesta operaciones
+  Estadísticas en tiempo real
+end note
+
+note right of DatabaseNode
+  BD centralizada
+  Solo acceso desde Backend
+  Backups automáticos
+  Replicación en producción
+end note
+
+note right of WebNode
+  Gestión administrativa
+  Reportes y estadísticas
+  Control de usuarios
+  (Opcional para defensa)
+end note
+
+' ========== LEYENDA ==========
+legend right
+  |<#95E1D3> 📱 Nodos Cliente |
+  |<#FF6B6B> 🖥️ Nodos Servidor |
+  |<#4ECDC4> 🗄️ Base de Datos |
+  |<#FFEAA7> API/Services |
+endlegend
+
+@enduml

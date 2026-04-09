@@ -11,8 +11,8 @@ class SolicitudAutenticacionModelo {
   /// Convierte el modelo a JSON para enviar al servidor
   Map<String, dynamic> aJson() {
     return {
-      'email': correo,
-      'password': contrasena,
+      'Correo': correo,
+      'Contrasena': contrasena,
     };
   }
 

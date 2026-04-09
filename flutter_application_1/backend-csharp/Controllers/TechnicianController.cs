@@ -18,12 +18,22 @@ namespace ServitecAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int? serviceId)
         {
             try
             {
-                var technicians = await _service.GetAllTechniciansAsync();
-                return Ok(technicians);
+                // Si viene serviceId, filtrar por servicio
+                if (serviceId.HasValue)
+                {
+                    _logger.LogInformation($"📡 GetAll con ServiceId: {serviceId}");
+                    var technicians = await _service.GetByServiceAsync(serviceId.Value);
+                    return Ok(technicians);
+                }
+                
+                // Si no viene serviceId, obtener todos
+                _logger.LogInformation($"📡 GetAll sin ServiceId (devolviendo todos)");
+                var allTechnicians = await _service.GetAllTechniciansAsync();
+                return Ok(allTechnicians);
             }
             catch (Exception ex)
             {
@@ -57,7 +67,7 @@ namespace ServitecAPI.Controllers
             try
             {
                 if (string.IsNullOrWhiteSpace(q))
-                    return await GetAll();
+                    return await GetAll(null);
 
                 var technicians = await _service.SearchTechniciansAsync(q);
                 return Ok(technicians);
@@ -118,6 +128,25 @@ namespace ServitecAPI.Controllers
             {
                 _logger.LogError($"Error: {ex.Message}");
                 return StatusCode(500, new { message = "Error updating technician" });
+            }
+        }
+
+        [HttpPut("{id}/services")]
+        public async Task<IActionResult> UpdateServices(int id, [FromBody] List<int> serviceIds)
+        {
+            try
+            {
+                _logger.LogInformation($"📡 UpdateServices for tech {id}. Count: {serviceIds?.Count ?? 0}");
+                var success = await _service.UpdateServicesAsync(id, serviceIds ?? new List<int>());
+                if (!success)
+                    return BadRequest(new { message = "Failed to update technician services" });
+
+                return Ok(new { message = "Technician services updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+                return StatusCode(500, new { message = "Error updating technician services" });
             }
         }
     }

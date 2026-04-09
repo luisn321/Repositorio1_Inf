@@ -23,14 +23,14 @@ class SolicitudRegistroClienteModelo {
   /// Convierte el modelo a JSON para enviar al servidor
   Map<String, dynamic> aJson() {
     return {
-      'firstName': nombre,
-      'lastName': apellido,
-      'email': correo,
-      'password': contrasena,
-      'phone': telefono,
-      'addressText': direccion,
-      'latitude': latitud,
-      'longitude': longitud,
+      'Nombre': nombre,
+      'Apellido': apellido,
+      'Correo': correo,
+      'Contrasena': contrasena,
+      'Telefono': telefono,
+      'DireccionTexto': direccion,
+      'Latitud': latitud,
+      'Longitud': longitud,
     };
   }
 

@@ -1,0 +1,15 @@
+  Determinando los proyectos que se van a restaurar...
+C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\ServitecAPI.csproj : warning NU1904: El paquete "System.Drawing.Common" 4.7.0 tiene una vulnerabilidad de gravedad cr??tica conocida, https://github.com/advisories/GHSA-rxg9-xrhp-64gj
+  Todos los proyectos est??n actualizados para la restauraci??n.
+C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\ServitecAPI.csproj : warning NU1904: El paquete "System.Drawing.Common" 4.7.0 tiene una vulnerabilidad de gravedad cr??tica conocida, https://github.com/advisories/GHSA-rxg9-xrhp-64gj
+C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\Program.cs(19,28): error CS0246: El nombre del tipo o del espacio de nombres 'CloudinarySettings' no se encontr?? (??falta una directiva using o una referencia de ensamblado?) [C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\ServitecAPI.csproj]
+
+ERROR al compilar.
+
+C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\ServitecAPI.csproj : warning NU1904: El paquete "System.Drawing.Common" 4.7.0 tiene una vulnerabilidad de gravedad cr??tica conocida, https://github.com/advisories/GHSA-rxg9-xrhp-64gj
+C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\ServitecAPI.csproj : warning NU1904: El paquete "System.Drawing.Common" 4.7.0 tiene una vulnerabilidad de gravedad cr??tica conocida, https://github.com/advisories/GHSA-rxg9-xrhp-64gj
+C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\Program.cs(19,28): error CS0246: El nombre del tipo o del espacio de nombres 'CloudinarySettings' no se encontr?? (??falta una directiva using o una referencia de ensamblado?) [C:\Users\Luis Infante\Desktop\5TO SEMESTRE\Taller de base de datos\Unidad 6\AppServTrabajo\flutter_application_1\backend-csharp\ServitecAPI.csproj]
+    2 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:04.60

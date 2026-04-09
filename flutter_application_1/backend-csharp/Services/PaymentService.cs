@@ -7,11 +7,13 @@ namespace ServitecAPI.Services
     public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _repo;
+        private readonly IContractionService _contractionService;
         private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService(IPaymentRepository repo, ILogger<PaymentService> logger)
+        public PaymentService(IPaymentRepository repo, IContractionService contractionService, ILogger<PaymentService> logger)
         {
             _repo = repo;
+            _contractionService = contractionService;
             _logger = logger;
         }
 
@@ -119,13 +121,37 @@ namespace ServitecAPI.Services
                     Monto = request.Monto,
                     MontoProyectado = request.MontoProyectado ?? request.Monto,
                     MetodoPago = request.MetodoPago ?? "",
-                    EstatusPago = "sin_pagar",
-                    EstadoMonto = "pendiente",
+                    EstatusPago = "Completado",  // CAMBIO: Cuando se registra, es porque ya se pagó (válido en CHECK constraint)
+                    EstadoMonto = "Aceptado",  // CAMBIO: El monto se considera aceptado
+                    ReferenciaPago = request.TransactionRef,
                     FechaVencimiento = DateTime.Now.AddDays(7),
                     DescripcionPago = request.DescripcionPago
                 };
 
-                return await _repo.CreateAsync(payment);
+                int paymentId = await _repo.CreateAsync(payment);
+                _logger.LogInformation($"✅ Payment {paymentId} recorded for contraction {request.IdContratacion}");
+
+                // ✨ ACTUALIZAR CONTRATACIÓN: Pasar a 'En Progreso' y registrar monto pagado
+                try
+                {
+                    var updateReq = new UpdateContractionDto
+                    {
+                        Estado = "En Progreso",
+                        EstadoMonto = "Aceptado",
+                        MontoPropuesto = (decimal)request.Monto,  // Aseguramos que el monto final sea este
+                        MontoPagado = (decimal)request.Monto,     // ✨ NUEVO: Registrar oficialmente el pago
+                        FechaPago = DateTime.Now                  // ✨ NUEVO: Registrar fecha del pago
+                    };
+
+                    _logger.LogInformation($"💳 Actualizando estado de contratacion {request.IdContratacion} a 'En Progreso'");
+                    await _contractionService.UpdateContractionAsync(request.IdContratacion, updateReq);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"⚠️ No se pudo actualizar el estado de la contratacion {request.IdContratacion}: {ex.Message}");
+                }
+
+                return paymentId;
             }
             catch (Exception ex)
             {
