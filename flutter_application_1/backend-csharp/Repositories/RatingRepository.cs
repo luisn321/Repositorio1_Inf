@@ -22,7 +22,7 @@ namespace ServitecAPI.Repositories
         {
             try
             {
-                _logger.LogInformation($"⭐ [RatingRepository.CreateAsync] Guardando calificación para tecnico {rating.IdTecnico}");
+                _logger.LogInformation($" [RatingRepository.CreateAsync] Guardando calificación para tecnico {rating.IdTecnico}");
                 
                 int ratingId = await _db.ExecuteScalarAsync<int>(
                     @"INSERT INTO calificaciones (id_contratacion, id_tecnico, puntuacion, comentario, fotos_resena_urls)
@@ -38,12 +38,12 @@ namespace ServitecAPI.Repositories
                     }
                 );
 
-                _logger.LogInformation($"✅ Calificación guardada con ID: {ratingId}");
+                _logger.LogInformation($" Calificación guardada con ID: {ratingId}");
                 return ratingId;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error en RatingRepository.CreateAsync: {ex.Message}");
+                _logger.LogError($" Error en RatingRepository.CreateAsync: {ex.Message}");
                 throw;
             }
         }

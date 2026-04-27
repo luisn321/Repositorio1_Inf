@@ -8,6 +8,22 @@ import 'PantallaPago.dart';
 import 'PantallaCalificaciones.dart';
 import '../utilidades/visor_imagenes_universal.dart';
 
+// ── Design tokens (sistema unificado Servitec) ───────────────────────────────
+const Color _verde = Color(0xFF1A5C38);
+const Color _verdeClaro = Color(0xFF247A4A);
+const Color _verdeOscuro = Color(0xFF0F3B22);
+const Color _acento = Color(0xFF4CAF82);
+const Color _fondoPage = Color(0xFFF2F6F4);
+const Color _fondoCampo = Color(0xFFF4F7F5);
+const Color _bordeField = Color(0xFFDDE8E3);
+const Color _grisTexto = Color(0xFF8FA89B);
+const Color _grisOscuro = Color(0xFF3D4F46);
+const Color _errorColor = Color(0xFFE05252);
+const Color _ambar = Color(0xFFF5A623);
+const Color _purpura = Color(0xFF673AB7);
+const Color _azul = Color(0xFF1565C0);
+// ─────────────────────────────────────────────────────────────────────────────
+
 class PantallaDetalleSolicitud extends StatefulWidget {
   final ContratacionModelo solicitud;
   final bool esCliente;
@@ -23,54 +39,48 @@ class PantallaDetalleSolicitud extends StatefulWidget {
       _PantallaDetalleSolicitudState();
 }
 
-class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
+class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud>
+    with SingleTickerProviderStateMixin {
   final ServicioContrataciones _servicioRed = ServicioContrataciones();
   late ContratacionModelo _solicitud;
   bool _cargando = false;
   Timer? _timerAutoRefresco;
 
-  // Design Tokens
-  static const Color _verde = Color(0xFF1A5C38);
-  static const Color _verdeClaro = Color(0xFF4CAF82);
-  static const Color _naranja = Color(0xFFFF9800);
-  static const Color _rojo = Color(0xFFCC3333);
-  static const Color _fondo = Color(0xFFF8FAF9);
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
     _solicitud = widget.solicitud;
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _animCtrl.forward();
     _iniciarAutoRefresco();
   }
 
   @override
   void dispose() {
     _timerAutoRefresco?.cancel();
+    _animCtrl.dispose();
     super.dispose();
   }
 
   void _iniciarAutoRefresco() {
-    _timerAutoRefresco = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timerAutoRefresco = Timer.periodic(const Duration(seconds: 5), (_) {
       if (mounted) _refrescarDatos();
     });
   }
 
   Future<void> _refrescarDatos() async {
     try {
-      // Nota: Aquí lo ideal sería tener un endpoint GetById en el servicio,
-      // pero usaremos la lista filtrada por ahora si no existe el GetById específico.
-      // Por simplicidad, asumimos que el técnico/cliente refresca la lista y actualiza el objeto local.
-      // Pero mejor intentamos obtener la versión más reciente si el servicio lo permite.
-      final lista = await _servicioRed.obtenerMisSolicitudes(
-        widget.esCliente ? _solicitud.idCliente : (_solicitud.idTecnico ?? 0),
+      final actualizado = await _servicioRed.obtenerContratacionPorId(
+        _solicitud.idContratacion,
       );
-
-      final actualizado = lista.firstWhere(
-        (s) => s.idContratacion == _solicitud.idContratacion,
-        orElse: () => _solicitud,
-      );
-
-      if (mounted && actualizado != _solicitud) {
+      if (mounted && actualizado != null) {
         setState(() => _solicitud = actualizado);
       }
     } catch (e) {
@@ -78,7 +88,64 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
     }
   }
 
-  // --- ACCIONES TÉCNICO ---
+  // ── Helpers ────────────────────────────────────────────────────────────
+  Color _colorEstado(String e) {
+    switch (e.toLowerCase()) {
+      case 'pendiente':
+        return _ambar;
+      case 'aceptada':
+        return _azul;
+      case 'en progreso':
+        return _purpura;
+      case 'completada':
+        return _acento;
+      case 'cancelada':
+        return _errorColor;
+      default:
+        return _grisTexto;
+    }
+  }
+
+  IconData _iconoEstado(String e) {
+    switch (e.toLowerCase()) {
+      case 'pendiente':
+        return Icons.hourglass_top_rounded;
+      case 'aceptada':
+        return Icons.check_circle_outline_rounded;
+      case 'en progreso':
+        return Icons.construction_rounded;
+      case 'completada':
+        return Icons.verified_rounded;
+      case 'cancelada':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.help_outline_rounded;
+    }
+  }
+
+  Color _colorEstadoMonto(String s) {
+    switch (s.toLowerCase()) {
+      case 'propuesto':
+        return _ambar;
+      case 'aceptado':
+        return _verde;
+      case 'rechazado':
+        return _errorColor;
+      case 'pago liberado':
+        return _verde;
+      case 'reembolsado':
+        return _azul;
+      default:
+        return _grisTexto;
+    }
+  }
+
+  String _formatearFecha(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/'
+      '${d.year}';
+
+  // ── Acciones Técnico ───────────────────────────────────────────────────
   Future<void> _aceptarSolicitud() async {
     await showDialog(
       context: context,
@@ -117,21 +184,21 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
         false;
 
     if (!confirma) return;
-
     setState(() => _cargando = true);
     try {
       await _servicioRed.marcarCompletada(_solicitud.idContratacion);
       _refrescarDatos();
     } catch (e) {
-      _snack('Error: $e');
+      _snack('Error: $e', error: true);
     } finally {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
-  // --- ACCIONES CLIENTE ---
+  // ── Acciones Cliente ───────────────────────────────────────────────────
   Future<void> _pagarServicio() async {
-    if (_solicitud.estadoMonto != 'Propuesto') return;
+    final statusMonto = (_solicitud.estadoMonto ?? '').trim();
+    if (statusMonto != 'Propuesto' && statusMonto != 'Aceptado') return;
 
     setState(() => _cargando = true);
     try {
@@ -144,19 +211,27 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
               idSolicitud: _solicitud.idContratacion,
               monto: _solicitud.montoPropuesto ?? 0,
               nombreTecnico: _solicitud.nombreTecnico ?? 'Técnico',
-              onPagoCorrecto: () => _refrescarDatos(),
+              descripcion: _solicitud.descripcion ?? 'Sin detalles adicionales',
+              nombreServicio: _solicitud.nombreServicio ?? 'Servicio Técnico',
+              fechaCita: _solicitud.fechaEstimada != null
+                  ? '${_formatearFecha(_solicitud.fechaEstimada!)} ${_solicitud.horaSolicitadaStr ?? ""}'
+                  : 'Por definir',
+              onPagoCorrecto: _refrescarDatos,
             ),
           ),
         );
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack('Error: $e', error: true);
     } finally {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
   Future<void> _rechazarMonto() async {
+    final statusMonto = (_solicitud.estadoMonto ?? '').trim();
+    if (statusMonto != 'Propuesto' && statusMonto != 'Aceptado') return;
+
     final confirma =
         await showDialog<bool>(
           context: context,
@@ -172,7 +247,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(backgroundColor: _rojo),
+                style: ElevatedButton.styleFrom(backgroundColor: _errorColor),
                 child: const Text('Rechazar'),
               ),
             ],
@@ -181,15 +256,14 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
         false;
 
     if (!confirma) return;
-
     setState(() => _cargando = true);
     try {
       await _servicioRed.rechazarMonto(_solicitud.idContratacion);
       _refrescarDatos();
     } catch (e) {
-      _snack('Error: $e');
+      _snack('Error: $e', error: true);
     } finally {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
@@ -204,15 +278,103 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
     );
   }
 
+  Future<void> _confirmarFinalizacionParaPago() async {
+    final confirma =
+        await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              '¿Confirmar Finalización?',
+              style: GoogleFonts.sora(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Al confirmar, el dinero retenido será transferido al técnico y el servicio se marcará como cerrado. Esta acción no se puede deshacer.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(backgroundColor: _verde),
+                child: const Text('Sí, confirmar'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirma) return;
+    setState(() => _cargando = true);
+    try {
+      final ok = await _servicioRed.verificarCompletado(
+        _solicitud.idContratacion,
+      );
+      if (ok) {
+        _snack('Pago liberado exitosamente');
+        _refrescarDatos();
+      }
+    } catch (e) {
+      _snack('Error al liberar pago: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
+
+  Future<void> _solicitarReembolsoEscrow() async {
+    final confirma =
+        await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              '¿Solicitar Reembolso?',
+              style: GoogleFonts.sora(
+                fontWeight: FontWeight.bold,
+                color: _errorColor,
+              ),
+            ),
+            content: const Text(
+              'Si el técnico no realizó el servicio programado, puedes solicitar el reembolso del monto retenido.\n\nEl servicio será cancelado definitivamente.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Volver'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(backgroundColor: _errorColor),
+                child: const Text('Confirmar Reembolso'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirma) return;
+    setState(() => _cargando = true);
+    try {
+      final ok = await _servicioRed.reembolsarPago(_solicitud.idContratacion);
+      if (ok) {
+        _snack('Reembolso procesado exitosamente');
+        _refrescarDatos();
+      }
+    } catch (e) {
+      _snack('Error al reembolsar: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
+
   Future<void> _rechazarSolicitud() async {
-    // ✨ Selección: ¿Proponer alternativa o rechazo total?
     final String? accion = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.help_outline_rounded, color: Color(0xFF673AB7)),
+            const Icon(Icons.help_outline_rounded, color: _purpura),
             const SizedBox(width: 12),
             Text(
               '¿Cómo proceder?',
@@ -233,7 +395,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
             child: Text(
               'Solo Rechazar',
               style: GoogleFonts.dmSans(
-                color: _rojo,
+                color: _errorColor,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -241,7 +403,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, 'PROPONER_CAMBIO'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF673AB7),
+              backgroundColor: _purpura,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -270,7 +432,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
           idSolicitud: _solicitud.idContratacion,
           onRechazo: () {
             _refrescarDatos();
-            Navigator.pop(context); // Salir si se cancela permanentemente
+            Navigator.pop(context);
           },
         ),
       );
@@ -303,14 +465,14 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
                     const Icon(
                       Icons.calendar_today_rounded,
                       size: 16,
-                      color: Color(0xFF673AB7),
+                      color: _purpura,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       _formatearFecha(_solicitud.fechaPropuestaSolicitada!),
                       style: GoogleFonts.dmSans(
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF673AB7),
+                        color: _purpura,
                       ),
                     ),
                   ],
@@ -321,14 +483,14 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
                     const Icon(
                       Icons.access_time_rounded,
                       size: 16,
-                      color: Color(0xFF673AB7),
+                      color: _purpura,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       _solicitud.horaPropuestaSolicitada ?? '---',
                       style: GoogleFonts.dmSans(
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF673AB7),
+                        color: _purpura,
                       ),
                     ),
                   ],
@@ -343,7 +505,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF673AB7),
+                  backgroundColor: _purpura,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Sí, Aceptar'),
@@ -354,18 +516,17 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
         false;
 
     if (!confirma) return;
-
     setState(() => _cargando = true);
     try {
       final ok = await _servicioRed.aceptarPropuesta(_solicitud.idContratacion);
       if (ok) {
         _refrescarDatos();
-        _snack('Propuesta aceptada!');
+        _snack('¡Propuesta aceptada!');
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack('Error: $e', error: true);
     } finally {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
@@ -381,7 +542,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
               '¿Rechazar Propuesta?',
               style: GoogleFonts.sora(
                 fontWeight: FontWeight.bold,
-                color: _rojo,
+                color: _errorColor,
               ),
             ),
             content: const Text(
@@ -395,7 +556,7 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _rojo,
+                  backgroundColor: _errorColor,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Sí, Rechazar y Cancelar'),
@@ -406,7 +567,6 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
         false;
 
     if (!confirma) return;
-
     setState(() => _cargando = true);
     try {
       final ok = await _servicioRed.rechazarPropuesta(
@@ -417,310 +577,366 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
         _snack('Propuesta rechazada y solicitud cancelada');
       }
     } catch (e) {
-      _snack('Error: $e');
+      _snack('Error: $e', error: true);
     } finally {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
-  void _snack(String msg) {
-    if (mounted)
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void _snack(String msg, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              error ? Icons.error_outline_rounded : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                msg,
+                style: GoogleFonts.dmSans(fontSize: 13, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: error ? _errorColor : _verde,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
-  // --- UI COMPONENTS ---
-
-  Color _colorEstado(String e) {
-    switch (e.toLowerCase()) {
-      case 'pendiente':
-        return _naranja;
-      case 'aceptada':
-        return Colors.blue;
-      case 'en progreso':
-        return Colors.purple;
-      case 'completada':
-        return _verde;
-      case 'cancelada':
-        return _rojo;
-      default:
-        return Colors.grey;
-    }
-  }
-
+  // ════════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final color = _colorEstado(_solicitud.estado);
-
     return Scaffold(
-      backgroundColor: _fondo,
-      appBar: AppBar(
-        title: Text(
-          'Detalle de Solicitud',
-          style: GoogleFonts.sora(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: _verde,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
+      backgroundColor: _fondoPage,
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _cargando
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(
+                            color: _verde,
+                            strokeWidth: 2.5,
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Actualizando…',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13,
+                              color: _grisTexto,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                      child: Column(
+                        children: [
+                          _buildParticipante(),
+                          const SizedBox(height: 14),
+                          _buildApartadoPropuesta(),
+                          _buildApartadoCancelacion(),
+                          _buildSeccionDescripcion(),
+                          const SizedBox(height: 14),
+                          _buildSeccionUbicacionTiempo(),
+                          const SizedBox(height: 14),
+                          _buildSeccionFinanzas(),
+                          _buildSeccionCalificacion(),
+                          const SizedBox(height: 20),
+                          _buildAcciones(),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
         ),
       ),
-      body: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+    );
+  }
+
+  // ── HEADER ──────────────────────────────────────────────────────────────
+  Widget _buildHeader() {
+    final colorEstado = _colorEstado(_solicitud.estado);
+    final iconoEstado = _iconoEstado(_solicitud.estado);
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_verdeOscuro, _verde, _verdeClaro],
+          stops: [0.0, 0.55, 1.0],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -28,
+            right: -18,
+            child: _Circle(size: 130, opacity: 0.07),
+          ),
+          Positioned(
+            top: 44,
+            right: 52,
+            child: _Circle(size: 52, opacity: 0.09),
+          ),
+
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTicketCard(color),
-                  const SizedBox(height: 24),
-                  _buildActions(color),
-                  const SizedBox(height: 40),
+                  // Fila: botón volver + badge SERVITEC
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _acento.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'SERVITEC',
+                          style: GoogleFonts.dmMono(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _acento,
+                            letterSpacing: 2.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Fila: ícono + título + número
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Detalle de solicitud',
+                            style: GoogleFonts.sora(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Nº ${_solicitud.idContratacion.toString().padLeft(5, '0')}',
+                            style: GoogleFonts.dmMono(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.6),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── BANNER DE ESTADO — prominente, sólido, legible ────
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorEstado,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorEstado.withOpacity(0.5),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.22),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            iconoEstado,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ESTADO',
+                                style: GoogleFonts.dmMono(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white.withOpacity(0.7),
+                                  letterSpacing: 1.8,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                _solicitud.estado,
+                                style: GoogleFonts.sora(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Indicador pulsante
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.7),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildTicketCard(Color colorEstado) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // CABECERA TICKET
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: colorEstado.withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'SOLICITUD #${_solicitud.idContratacion}',
-                      style: GoogleFonts.dmMono(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: _verde,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    _buildStatusBadge(colorEstado),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Divider(),
-                const SizedBox(height: 10),
-                _buildParticipantInfo(),
-              ],
-            ),
-          ),
-
-          // CUERPO TICKET
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildApartadoPropuesta(),
-                _buildApartadoCancelacion(),
-                _buildSectionHeader('Descripción del Servicio'),
-                const SizedBox(height: 12),
-                Text(
-                  _solicitud.descripcion ?? 'Sin descripción proporcionada.',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    color: Colors.grey[800],
-                    height: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader('Ubicación y Tiempo'),
-                const SizedBox(height: 16),
-                _buildInfoRow(
-                  Icons.location_on_rounded,
-                  'Ubicación',
-                  _solicitud.ubicacion ?? 'No especificada',
-                  _naranja,
-                ),
-                _buildInfoRow(
-                  Icons.event_rounded,
-                  'Fecha Programada',
-                  _solicitud.fechaEstimada != null
-                      ? _formatearFecha(_solicitud.fechaEstimada!)
-                      : _formatearFecha(_solicitud.fechaSolicitud),
-                  Colors.blue,
-                ),
-                _buildInfoRow(
-                  Icons.access_time_filled_rounded,
-                  'Hora',
-                  _solicitud.horaSolicitadaStr ?? 'Pendiente',
-                  Colors.teal,
-                ),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader('Pagos y Finanzas'),
-                const SizedBox(height: 16),
-                _buildFinanceDetails(),
-                _buildRatingSection(),
-              ],
-            ),
-          ),
-
-          // PIE TICKET (Corte decorativo)
-          Container(
-            height: 20,
-            decoration: BoxDecoration(
-              color: _fondo,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(100),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusBadge(Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        _solicitud.estado.toUpperCase(),
-        style: GoogleFonts.dmSans(
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-          color: color,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildParticipantInfo() {
-    final String label = widget.esCliente ? 'Tu Técnico' : 'Tu Cliente';
-    final String? nombre = widget.esCliente
+  // ── PARTICIPANTE ─────────────────────────────────────────────────────────
+  Widget _buildParticipante() {
+    final label = widget.esCliente ? 'Tu técnico' : 'Tu cliente';
+    final nombre = widget.esCliente
         ? _solicitud.nombreTecnico
         : _solicitud.nombreCliente;
-    final int? id = widget.esCliente
-        ? _solicitud.idTecnico
-        : _solicitud.idCliente;
-
-    final String? foto = widget.esCliente
+    final id = widget.esCliente ? _solicitud.idTecnico : _solicitud.idCliente;
+    final foto = widget.esCliente
         ? _solicitud.fotoPerfilTecnico
         : _solicitud.fotoPerfilCliente;
-    final String heroTag = 'avatar_detalle_${_solicitud.idContratacion}';
+    final heroTag = 'avatar_detalle_${_solicitud.idContratacion}';
 
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (foto != null && foto.isNotEmpty) {
-              VisorImagenUniversal.abrir(context, foto, heroTag);
-            }
-          },
-          child: Hero(
-            tag: heroTag,
-            child: CircleAvatar(
-              radius: 24,
-              backgroundColor: _verde.withValues(alpha: 0.1),
-              backgroundImage: (foto != null && foto.isNotEmpty)
-                  ? NetworkImage(foto)
-                  : null,
-              child: (foto == null || foto.isEmpty)
-                  ? const Icon(Icons.person_rounded, color: _verde, size: 28)
-                  : null,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.dmSans(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                nombre ?? (id != null ? 'Usuario #$id' : 'Por asignar'),
-                style: GoogleFonts.sora(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: _verde,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (id != null)
-          IconButton(
-            onPressed: () => _snack('Función de chat próximamente'),
-            icon: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: _verdeClaro,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: GoogleFonts.dmSans(
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
-        color: Colors.blueGrey[300],
-        letterSpacing: 1.1,
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    IconData icon,
-    String label,
-    String value,
-    Color iconColor,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _decoTarjeta(),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: iconColor),
-          const SizedBox(width: 16),
+          GestureDetector(
+            onTap: () {
+              if (foto != null && foto.isNotEmpty) {
+                VisorImagenUniversal.abrir(context, foto, heroTag);
+              }
+            },
+            child: Hero(
+              tag: heroTag,
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: _verde.withOpacity(0.1),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: (foto != null && foto.isNotEmpty)
+                      ? Image.network(
+                          foto,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _AvatarIniciales(nombre: nombre ?? '?'),
+                        )
+                      : _AvatarIniciales(nombre: nombre ?? '?'),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,182 +945,417 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
                   label,
                   style: GoogleFonts.dmSans(
                     fontSize: 11,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w600,
+                    color: _grisTexto,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
-                  value,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    color: Colors.grey[800],
-                    fontWeight: FontWeight.w600,
+                  nombre ?? (id != null ? 'Usuario #$id' : 'Por asignar'),
+                  style: GoogleFonts.sora(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _verde,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinanceDetails() {
-    final hasMonto =
-        _solicitud.montoPropuesto != null && _solicitud.montoPropuesto! > 0;
-    final statusMonto = _solicitud.estadoMonto ?? 'Sin Propuesta';
-    final isPaid =
-        _solicitud.montoPagado != null && _solicitud.montoPagado! > 0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          // 1. MONTO (CANTIDAD)
-          _buildFinanceRow(
-            'Monto del Servicio:',
-            hasMonto
-                ? '\$${_solicitud.montoPropuesto!.toStringAsFixed(2)}'
-                : '---',
-            _verde,
-            isBold: true,
-          ),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1),
-          ),
-
-          // 2. ESTADO DEL MONTO
-          _buildFinanceRow(
-            'Estado del Monto:',
-            statusMonto.toUpperCase(),
-            _colorEstadoMonto(statusMonto),
-          ),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1),
-          ),
-
-          // 3. ESTADO DEL PAGO
-          _buildFinanceRow(
-            'Estado del Pago:',
-            isPaid ? 'COMPLETADO' : 'PENDIENTE',
-            isPaid ? _verde : _naranja,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinanceRow(
-    String label,
-    String value,
-    Color color, {
-    bool isBold = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 13,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            value,
-            style: GoogleFonts.sora(
-              fontSize: isBold ? 15 : 12,
-              fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _colorEstadoMonto(String status) {
-    switch (status.toLowerCase()) {
-      case 'propuesto':
-        return _naranja;
-      case 'aceptado':
-        return _verde;
-      case 'rechazado':
-        return _rojo;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Widget _buildActions(Color colorEstado) {
-    final estado = _solicitud.estado.toLowerCase();
-    final isPaid =
-        _solicitud.montoPagado != null && _solicitud.montoPagado! > 0;
-    final statusMonto = _solicitud.estadoMonto ?? 'Sin Propuesta';
-
-    // --- ACCIONES TÉCNICO ---
-    if (!widget.esCliente) {
-      // Si hay propuesta pendiente, quitar botones de aceptar/rechazar general
-      if (estado == 'pendiente' &&
-          _solicitud.fechaPropuestaSolicitada != null) {
-        return const SizedBox.shrink();
-      }
-
-      if (estado == 'pendiente') {
-        return Row(
-          children: [
-            Expanded(
-              child: _btnAccion(
-                'Aceptar Solicitud',
-                Icons.check_circle_rounded,
-                _verde,
-                _aceptarSolicitud,
+          if (id != null)
+            GestureDetector(
+              onTap: () => _snack('Chat próximamente disponible'),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: _verde.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: _verde,
+                  size: 18,
+                ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _btnAccion(
-                'Rechazar',
-                Icons.cancel_rounded,
-                _rojo,
-                _rechazarSolicitud,
+        ],
+      ),
+    );
+  }
+
+  // ── SECCIÓN: DESCRIPCIÓN ─────────────────────────────────────────────────
+  Widget _buildSeccionDescripcion() {
+    return _TarjetaSeccion(
+      titulo: 'Descripción del servicio',
+      icono: Icons.description_outlined,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _fondoCampo,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _bordeField),
+        ),
+        child: Text(
+          _solicitud.descripcion ?? 'Sin descripción proporcionada.',
+          style: GoogleFonts.dmSans(
+            fontSize: 13,
+            color: _grisOscuro,
+            height: 1.65,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── SECCIÓN: UBICACIÓN Y TIEMPO ───────────────────────────────────────────
+  Widget _buildSeccionUbicacionTiempo() {
+    return _TarjetaSeccion(
+      titulo: 'Ubicación y tiempo',
+      icono: Icons.location_on_outlined,
+      child: Column(
+        children: [
+          _FilaInfo(
+            icono: Icons.location_on_outlined,
+            label: 'Ubicación',
+            valor: _solicitud.ubicacion ?? 'No especificada',
+            color: _ambar,
+          ),
+          const SizedBox(height: 12),
+          _FilaInfo(
+            icono: Icons.event_rounded,
+            label: 'Fecha programada',
+            valor: _solicitud.fechaEstimada != null
+                ? _formatearFecha(_solicitud.fechaEstimada!)
+                : _formatearFecha(_solicitud.fechaSolicitud),
+            color: _azul,
+          ),
+          const SizedBox(height: 12),
+          _FilaInfo(
+            icono: Icons.schedule_rounded,
+            label: 'Hora',
+            valor: _solicitud.horaSolicitadaStr ?? 'Pendiente',
+            color: const Color(0xFF00695C),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── SECCIÓN: FINANZAS ─────────────────────────────────────────────────────
+  Widget _buildSeccionFinanzas() {
+    final hasMonto = (_solicitud.montoPropuesto ?? 0) > 0;
+    final statusMonto = _solicitud.estadoMonto ?? 'Sin Propuesta';
+    final isPaid = (_solicitud.montoPagado ?? 0) > 0;
+
+    return _TarjetaSeccion(
+      titulo: 'Pagos y finanzas',
+      icono: Icons.payments_outlined,
+      child: Column(
+        children: [
+          _FilaFinanza(
+            label: 'Monto del servicio',
+            valor: hasMonto
+                ? '\$${_solicitud.montoPropuesto!.toStringAsFixed(2)}'
+                : '—',
+            color: _verde,
+            grande: true,
+          ),
+          Divider(height: 24, color: _bordeField),
+          _FilaFinanza(
+            label: 'Estado del monto',
+            valor: statusMonto,
+            color: _colorEstadoMonto(statusMonto),
+          ),
+          Divider(height: 24, color: _bordeField),
+          _FilaFinanza(
+            label: 'Estado del pago',
+            valor: isPaid ? 'Completado' : 'Pendiente',
+            color: isPaid ? _verde : _ambar,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── SECCIÓN: CALIFICACIÓN ─────────────────────────────────────────────────
+  Widget _buildSeccionCalificacion() {
+    final pts = _solicitud.puntuacionCliente;
+    if (pts == null || pts == 0) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: _TarjetaSeccion(
+        titulo: 'Calificación del servicio',
+        icono: Icons.star_rounded,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ...List.generate(
+                  5,
+                  (i) => Icon(
+                    i < pts ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: _ambar,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$pts.0',
+                  style: GoogleFonts.sora(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _ambar,
+                  ),
+                ),
+              ],
+            ),
+            if (_solicitud.comentarioCliente?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _ambar.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _ambar.withOpacity(0.2)),
+                ),
+                child: Text(
+                  '"${_solicitud.comentarioCliente}"',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: _grisOscuro,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Evaluación del cliente',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11,
+                    color: _grisTexto,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (_solicitud.fechaCalificacion != null)
+                  Text(
+                    _formatearFecha(_solicitud.fechaCalificacion!),
+                    style: GoogleFonts.dmSans(fontSize: 11, color: _grisTexto),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── APARTADO: PROPUESTA DE CAMBIO ─────────────────────────────────────────
+  Widget _buildApartadoPropuesta() {
+    if (_solicitud.fechaPropuestaSolicitada == null ||
+        _solicitud.estado.toLowerCase() != 'pendiente') {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _purpura.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: _purpura.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Cabecera coloreada
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              decoration: BoxDecoration(
+                color: _purpura.withOpacity(0.08),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: _purpura.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Icon(
+                      Icons.edit_calendar_rounded,
+                      color: _purpura,
+                      size: 17,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Propuesta de cambio',
+                    style: GoogleFonts.sora(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _purpura,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Contenido
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  if (_solicitud.fechaPropuestaCambios != null)
+                    _FilaInfo(
+                      icono: Icons.event_repeat_rounded,
+                      label: 'Fecha de envío',
+                      valor: _formatearFecha(_solicitud.fechaPropuestaCambios!),
+                      color: _purpura,
+                    ),
+                  const SizedBox(height: 10),
+                  _FilaInfo(
+                    icono: Icons.calendar_today_rounded,
+                    label: 'Nueva fecha propuesta',
+                    valor: _formatearFecha(
+                      _solicitud.fechaPropuestaSolicitada!,
+                    ),
+                    color: _purpura,
+                  ),
+                  const SizedBox(height: 10),
+                  _FilaInfo(
+                    icono: Icons.schedule_rounded,
+                    label: 'Nueva hora propuesta',
+                    valor: _solicitud.horaPropuestaSolicitada ?? '—',
+                    color: _purpura,
+                  ),
+                  if (_solicitud.motivoCambio?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: 10),
+                    _FilaInfo(
+                      icono: Icons.chat_bubble_outline_rounded,
+                      label: 'Motivo',
+                      valor: _solicitud.motivoCambio!,
+                      color: _purpura,
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
-        );
-      }
+        ),
+      ),
+    );
+  }
 
-      // Si ya aceptó pero no hay monto propuesto
+  // ── APARTADO: CANCELACIÓN ─────────────────────────────────────────────────
+  Widget _buildApartadoCancelacion() {
+    if (_solicitud.estado.toLowerCase() != 'cancelada' ||
+        _solicitud.motivoCambio == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: _errorColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _errorColor.withOpacity(0.25), width: 1.5),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.cancel_outlined, color: _errorColor, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Motivo de cancelación',
+                  style: GoogleFonts.sora(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _errorColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _solicitud.motivoCambio!,
+              style: GoogleFonts.dmSans(
+                fontSize: 13,
+                color: _grisOscuro,
+                fontStyle: FontStyle.italic,
+                height: 1.55,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── ACCIONES ──────────────────────────────────────────────────────────────
+  Widget _buildAcciones() {
+    final estado = _solicitud.estado.toLowerCase();
+    final statusMonto = (_solicitud.estadoMonto ?? 'Sin Propuesta').trim();
+    final isPaid = (_solicitud.montoPagado ?? 0) > 0;
+    final hayPropuesta = _solicitud.fechaPropuestaSolicitada != null;
+
+    // TÉCNICO
+    if (!widget.esCliente) {
+      if (estado == 'pendiente' && hayPropuesta) {
+        return const SizedBox.shrink();
+      }
+      if (estado == 'pendiente') {
+        return _filaAcciones([
+          _BtnAccion(
+            label: 'Aceptar',
+            icono: Icons.check_circle_rounded,
+            color: _verde,
+            onTap: _aceptarSolicitud,
+          ),
+          _BtnAccion(
+            label: 'Rechazar',
+            icono: Icons.cancel_rounded,
+            color: _errorColor,
+            onTap: _rechazarSolicitud,
+          ),
+        ]);
+      }
       if ((estado == 'aceptada' || estado == 'en progreso') &&
           statusMonto == 'Sin Propuesta') {
-        return _btnAccion(
-          'Proponer Monto',
-          Icons.local_atm_rounded,
-          _naranja,
+        return _btnSolo(
+          'Proponer monto',
+          Icons.payments_outlined,
+          _ambar,
           _proponerMonto,
         );
       }
-
-      // SOLO MOSTRAR COMPLETAR SI YA PAGÓ
       if ((estado == 'aceptada' || estado == 'en progreso') && isPaid) {
-        return _btnAccion(
-          'Marcar como Completada',
+        return _btnSolo(
+          'Marcar como completada',
           Icons.verified_rounded,
           _verde,
           _completarServicio,
@@ -912,186 +1363,317 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
       }
     }
 
-    // --- ACCIONES CLIENTE ---
+    // CLIENTE
     if (widget.esCliente) {
-      if (statusMonto == 'Propuesto') {
-        return Row(
-          children: [
-            Expanded(
-              child: _btnAccion(
-                'Pagar \$${_solicitud.montoPropuesto?.toStringAsFixed(2)}',
-                Icons.payment_rounded,
-                _verde,
-                _pagarServicio,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _btnAccion(
-                'Rechazar',
-                Icons.close_rounded,
-                _rojo,
-                _rechazarMonto,
-              ),
-            ),
-          ],
-        );
+      if (statusMonto.toLowerCase() == 'propuesto' ||
+          statusMonto.toLowerCase() == 'aceptado') {
+        return _filaAcciones([
+          _BtnAccion(
+            label:
+                'Pagar \$${_solicitud.montoPropuesto?.toStringAsFixed(2) ?? '—'}',
+            icono: Icons.payment_rounded,
+            color: _verde,
+            onTap: _pagarServicio,
+          ),
+          _BtnAccion(
+            label: 'Rechazar',
+            icono: Icons.close_rounded,
+            color: _errorColor,
+            onTap: _rechazarMonto,
+          ),
+        ]);
       }
-
-      // ACCIONES DE PROPUESTA ALTERNATIVA (Diferentes de aceptar monto)
-      if (estado == 'pendiente' &&
-          _solicitud.fechaPropuestaSolicitada != null) {
-        return Row(
-          children: [
-            Expanded(
-              child: _btnAccion(
-                'Aceptar Propuesta',
-                Icons.check_circle_rounded,
-                const Color(0xFF673AB7),
-                _aceptarPropuestaCambio,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _btnAccion(
-                'Rechazar Propuesta',
-                Icons.cancel_rounded,
-                _rojo,
-                _rechazarPropuestaCambio,
-              ),
-            ),
-          ],
-        );
+      if (estado == 'pendiente' && hayPropuesta) {
+        return _filaAcciones([
+          _BtnAccion(
+            label: 'Aceptar propuesta',
+            icono: Icons.check_circle_rounded,
+            color: _purpura,
+            onTap: _aceptarPropuestaCambio,
+          ),
+          _BtnAccion(
+            label: 'Rechazar',
+            icono: Icons.cancel_rounded,
+            color: _errorColor,
+            onTap: _rechazarPropuestaCambio,
+          ),
+        ]);
       }
-      if (estado == 'completada' &&
-          (_solicitud.puntuacionCliente == null ||
-              _solicitud.puntuacionCliente == 0)) {
-        return _btnAccion(
-          'Calificar Servicio',
-          Icons.star_rounded,
-          Colors.amber[700]!,
-          () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PantallaCalificaciones(
-                  idContratacion: _solicitud.idContratacion,
-                  idTecnico: _solicitud.idTecnico ?? 0,
-                  nombreTecnico: _solicitud.nombreTecnico ?? 'Técnico',
-                  onCalificacionEnviada: _refrescarDatos,
+      if (estado == 'completada') {
+        final sm = statusMonto.toLowerCase();
+        if (sm != 'pago liberado' && sm != 'reembolsado') {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: _verde.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _verde.withOpacity(0.18), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: _verde,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'El técnico marcó el servicio como completado.',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          color: _verde,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        );
+              const SizedBox(height: 12),
+              _btnSolo(
+                'Confirmar y liberar pago',
+                Icons.check_circle_rounded,
+                _verde,
+                _confirmarFinalizacionParaPago,
+              ),
+              const SizedBox(height: 10),
+              _btnSolo(
+                'No realizó el servicio (Reembolso)',
+                Icons.warning_amber_rounded,
+                _errorColor,
+                _solicitarReembolsoEscrow,
+              ),
+            ],
+          );
+        }
+        if (statusMonto == 'Pago Liberado' &&
+            (_solicitud.puntuacionCliente == null ||
+                _solicitud.puntuacionCliente == 0)) {
+          return _btnSolo(
+            'Calificar servicio',
+            Icons.star_rounded,
+            _ambar,
+            () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PantallaCalificaciones(
+                    idContratacion: _solicitud.idContratacion,
+                    idTecnico: _solicitud.idTecnico ?? 0,
+                    nombreTecnico: _solicitud.nombreTecnico ?? 'Técnico',
+                    fotoTecnico: _solicitud.fotoPerfilTecnico,
+                    onCalificacionEnviada: _refrescarDatos,
+                  ),
+                ),
+              );
+            },
+          );
+        }
       }
     }
 
     return const SizedBox.shrink();
   }
 
-  Widget _btnAccion(
+  // Helpers de acciones
+  Widget _filaAcciones(List<_BtnAccion> btns) {
+    return Row(
+      children: btns
+          .map(
+            (b) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: btns.indexOf(b) == 0 ? 0 : 6,
+                  right: btns.indexOf(b) == btns.length - 1 ? 0 : 6,
+                ),
+                child: _boton(b.label, b.icono, b.color, b.onTap),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _btnSolo(
     String label,
-    IconData icon,
+    IconData icono,
     Color color,
     VoidCallback onTap,
-  ) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 20),
-      label: Text(
-        label,
-        style: GoogleFonts.sora(fontWeight: FontWeight.w700, fontSize: 14),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 0,
+  ) => _boton(label, icono, color, onTap);
+
+  Widget _boton(String label, IconData icono, Color color, VoidCallback onTap) {
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icono, size: 18),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.sora(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRatingSection() {
-    if (_solicitud.puntuacionCliente == null ||
-        _solicitud.puntuacionCliente == 0)
-      return const SizedBox.shrink();
+  // ── Decoración de tarjeta común ───────────────────────────────────────────
+  BoxDecoration _decoTarjeta() => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(20),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 14,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+}
 
-    return Column(
+// ════════════════════════════════════════════════════════════════════════════
+// COMPONENTES INTERNOS REUTILIZABLES
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Tarjeta con título de sección (barra acento + icono + label)
+class _TarjetaSeccion extends StatelessWidget {
+  final String titulo;
+  final IconData icono;
+  final Widget child;
+
+  const _TarjetaSeccion({
+    required this.titulo,
+    required this.icono,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título con barra lateral
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: _acento,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(icono, color: _verde, size: 15),
+              const SizedBox(width: 7),
+              Text(
+                titulo,
+                style: GoogleFonts.sora(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _verde,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Fila de información con ícono en cuadro coloreado
+class _FilaInfo extends StatelessWidget {
+  final IconData icono;
+  final String label;
+  final String valor;
+  final Color color;
+
+  const _FilaInfo({
+    required this.icono,
+    required this.label,
+    required this.valor,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 24),
-        _buildSectionHeader('Calificación del Servicio'),
-        const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(16),
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: Colors.amber.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: Icon(icono, color: color, size: 17),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  ...List.generate(
-                    5,
-                    (index) => Icon(
-                      index < _solicitud.puntuacionCliente!
-                          ? Icons.star_rounded
-                          : Icons.star_outline_rounded,
-                      color: Colors.amber[700],
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${_solicitud.puntuacionCliente}.0',
-                    style: GoogleFonts.sora(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.amber[900],
-                    ),
-                  ),
-                ],
-              ),
-              if (_solicitud.comentarioCliente != null &&
-                  _solicitud.comentarioCliente!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  '"${_solicitud.comentarioCliente}"',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey[800],
-                    height: 1.4,
-                  ),
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  color: _grisTexto,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Evaluación del cliente',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 11,
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    _solicitud.fechaCalificacion != null
-                        ? _formatearFecha(_solicitud.fechaCalificacion!)
-                        : '',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 11,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                valor,
+                style: GoogleFonts.dmSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _grisOscuro,
+                ),
               ),
             ],
           ),
@@ -1099,120 +1681,115 @@ class _PantallaDetalleSolicitudState extends State<PantallaDetalleSolicitud> {
       ],
     );
   }
+}
 
-  Widget _buildApartadoPropuesta() {
-    // ✨ Solo mostrar propuesta si el estado es Pendiente (si ya se aceptó, backend limpia los campos)
-    if (_solicitud.fechaPropuestaSolicitada == null ||
-        _solicitud.estado.toLowerCase() != 'pendiente') {
-      return const SizedBox.shrink();
-    }
+/// Fila de finanzas con pill de color
+class _FilaFinanza extends StatelessWidget {
+  final String label;
+  final String valor;
+  final Color color;
+  final bool grande;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  const _FilaFinanza({
+    required this.label,
+    required this.valor,
+    required this.color,
+    this.grande = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildSectionHeader('Propuesta de cambio en solicitud'),
-        const SizedBox(height: 12),
+        Text(
+          label,
+          style: GoogleFonts.dmSans(
+            fontSize: 13,
+            color: _grisOscuro,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFF673AB7).withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xFF673AB7).withValues(alpha: 0.2),
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            valor,
+            style: GoogleFonts.sora(
+              fontSize: grande ? 16 : 12,
+              fontWeight: FontWeight.w800,
+              color: color,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInfoRow(
-                Icons.event_repeat_rounded,
-                'Fecha de envío propuesta',
-                _solicitud.fechaPropuestaCambios != null
-                    ? _formatearFecha(_solicitud.fechaPropuestaCambios!)
-                    : 'Hoy',
-                const Color(0xFF673AB7),
-              ),
-              _buildInfoRow(
-                Icons.calendar_today_rounded,
-                'Nueva Fecha Solicitada',
-                _formatearFecha(_solicitud.fechaPropuestaSolicitada!),
-                const Color(0xFF673AB7),
-              ),
-              _buildInfoRow(
-                Icons.access_time_rounded,
-                'Nueva Hora Solicitada',
-                _solicitud.horaPropuestaSolicitada ?? '---',
-                const Color(0xFF673AB7),
-              ),
-              _buildInfoRow(
-                Icons.chat_rounded,
-                'Motivo del Cambio',
-                _solicitud.motivoCambio ?? 'Sin motivo',
-                const Color(0xFF673AB7),
-              ),
-            ],
-          ),
         ),
-        const SizedBox(height: 24),
       ],
     );
   }
+}
 
-  Widget _buildApartadoCancelacion() {
-    // ✨ Mostrar motivo si está cancelada y hay un motivo guardado (rechazo o propuesta rechazada)
-    if (_solicitud.estado.toLowerCase() != 'cancelada' ||
-        _solicitud.motivoCambio == null) {
-      return const SizedBox.shrink();
-    }
+/// Avatar de iniciales para cuando no hay foto
+class _AvatarIniciales extends StatelessWidget {
+  final String nombre;
+  const _AvatarIniciales({required this.nombre});
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Motivo de Cancelación'),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _rojo.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _rojo.withValues(alpha: 0.2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.cancel_outlined, color: _rojo, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Esta solicitud fue cancelada',
-                    style: GoogleFonts.dmSans(
-                      fontWeight: FontWeight.bold,
-                      color: _rojo,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _solicitud.motivoCambio!,
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                  fontStyle: FontStyle.italic,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
+  String get _iniciales {
+    final p = nombre.trim().split(' ');
+    if (p.length >= 2) return '${p[0][0]}${p[1][0]}'.toUpperCase();
+    return nombre.isNotEmpty ? nombre[0].toUpperCase() : '?';
   }
 
-  String _formatearFecha(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _verde.withOpacity(0.15),
+      child: Center(
+        child: Text(
+          _iniciales,
+          style: GoogleFonts.sora(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: _verde,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Círculo decorativo del header
+class _Circle extends StatelessWidget {
+  final double size, opacity;
+  const _Circle({required this.size, required this.opacity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withOpacity(opacity),
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+}
+
+/// Data class para los botones de acción
+class _BtnAccion {
+  final String label;
+  final IconData icono;
+  final Color color;
+  final VoidCallback onTap;
+  const _BtnAccion({
+    required this.label,
+    required this.icono,
+    required this.color,
+    required this.onTap,
+  });
 }

@@ -42,13 +42,13 @@ El sistema deberá cambiar el estado de la solicitud a “Pagado” una vez conf
 del pago. 
 • RF-16. Actualización de estado del servicio. 
 El sistema deberá permitir que el técnico actualice el estado del servicio a “En proceso” y 
-posteriormente a “Finalizado”. 
+posteriormente a “Completada”. 
 • RF-17. Historial de solicitudes. 
 El sistema deberá permitir que tanto cliente como técnico consulten el historial de solicitudes 
 realizadas o atendidas. 
 • RF-18. Estados de solicitud. 
-El sistema deberá manejar los siguientes estados de solicitud: Aceptada, Rechazada, En proceso 
-y Finalizada.
+El sistema deberá manejar los siguientes estados de solicitud: Aceptada, Cancelada, En proceso 
+y Completada.
 
 Requerimientos no funcionales: 
 3.3.3 Consideraciones de hardware. 

@@ -48,7 +48,7 @@ namespace ServitecAPI.Services
                 // Generar token
                 var token = GenerateToken(user.IdUsuario, user.Email, user.TipoUsuario);
 
-                _logger.LogInformation($"✅ Usuario {user.Email} inició sesión correctamente");
+                _logger.LogInformation($" Usuario {user.Email} inició sesión correctamente");
                 _logger.LogInformation($"   ├─ IdUsuario: {user.IdUsuario}");
                 _logger.LogInformation($"   ├─ TipoUsuario: {user.TipoUsuario}");
                 _logger.LogInformation($"   └─ Nombre: {user.Nombre}");
@@ -66,7 +66,7 @@ namespace ServitecAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error en inicio de sesión: {ex.Message}");
+                _logger.LogError($" Error en inicio de sesión: {ex.Message}");
                 throw;
             }
         }
@@ -111,7 +111,7 @@ namespace ServitecAPI.Services
                 // Generar token
                 var token = GenerateToken(userId, user.Email, "cliente");
 
-                _logger.LogInformation($"✅ Cliente registrado: {request.Correo}");
+                _logger.LogInformation($" Cliente registrado: {request.Correo}");
 
                 return new AuthResponse
                 {
@@ -126,7 +126,7 @@ namespace ServitecAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error registrando cliente: {ex.Message}");
+                _logger.LogError($" Error registrando cliente: {ex.Message}");
                 throw;
             }
         }
@@ -180,7 +180,7 @@ namespace ServitecAPI.Services
                 // Generar token
                 var token = GenerateToken(techId, user.Email, "tecnico");
 
-                _logger.LogInformation($"✅ Técnico registrado: {request.Correo}");
+                _logger.LogInformation($" Técnico registrado: {request.Correo}");
 
                 return new AuthResponse
                 {
@@ -195,7 +195,7 @@ namespace ServitecAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error registrando técnico: {ex.Message}");
+                _logger.LogError($" Error registrando técnico: {ex.Message}");
                 throw;
             }
         }
@@ -281,7 +281,7 @@ namespace ServitecAPI.Services
                 if (cliente == null || cliente.Count == 0)
                     return null;
 
-                // Validar y actualizar contraseña si se intenta cambiar
+              
                 if (!string.IsNullOrEmpty(request.ContrasenaNueva))
                 {
                     if (string.IsNullOrEmpty(request.ContrasenaActual))
@@ -292,7 +292,7 @@ namespace ServitecAPI.Services
                         throw new InvalidOperationException("Contraseña actual incorrecta");
                 }
 
-                // Construir query de actualización
+               
                 var updates = new List<string>();
                 var parameters = new Dictionary<string, object> { { "@id", request.Id } };
 
@@ -346,7 +346,7 @@ namespace ServitecAPI.Services
                     _logger.LogInformation($"Client profile updated successfully: {request.Id}");
                 }
 
-                // Obtener datos actualizados
+                
                 var clienteActualizadoParams = new Dictionary<string, object> { { "@id", request.Id } };
                 var clienteActualizado = await _db.ExecuteQueryAsync(
                     @"SELECT 
@@ -380,7 +380,7 @@ namespace ServitecAPI.Services
             {
                 _logger.LogInformation($"Updating technician profile for ID: {request.Id}");
 
-                // Obtener técnico actual
+               
                 var tecnicoParams = new Dictionary<string, object> { { "@id", request.Id } };
                 var tecnico = await _db.ExecuteQueryAsync(
                     "SELECT * FROM tecnicos WHERE id_tecnico = @id",
@@ -390,7 +390,7 @@ namespace ServitecAPI.Services
                 if (tecnico == null || tecnico.Count == 0)
                     return null;
 
-                // Validar y actualizar contraseña si se intenta cambiar
+                
                 if (!string.IsNullOrEmpty(request.ContrasenaNueva))
                 {
                     if (string.IsNullOrEmpty(request.ContrasenaActual))
@@ -401,7 +401,7 @@ namespace ServitecAPI.Services
                         throw new InvalidOperationException("Contraseña actual incorrecta");
                 }
 
-                // Construir query de actualización
+               
                 var updates = new List<string>();
                 var parameters = new Dictionary<string, object> { { "@id", request.Id } };
 
@@ -542,7 +542,7 @@ namespace ServitecAPI.Services
 
                     if (tecnico != null && tecnico.Count > 0)
                     {
-                        _logger.LogInformation($"✅ Perfil de técnico encontrado para ID: {userId}");
+                        _logger.LogInformation($"Perfil de técnico encontrado para ID: {userId}");
                         return tecnico.FirstOrDefault();
                     }
                 }
@@ -569,7 +569,7 @@ namespace ServitecAPI.Services
 
                     if (cliente != null && cliente.Count > 0)
                     {
-                        _logger.LogInformation($"✅ Perfil de cliente encontrado para ID: {userId}");
+                        _logger.LogInformation($" Perfil de cliente encontrado para ID: {userId}");
                         return cliente.FirstOrDefault();
                     }
                 }

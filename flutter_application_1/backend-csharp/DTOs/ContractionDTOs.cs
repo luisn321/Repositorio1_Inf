@@ -8,7 +8,7 @@ namespace ServitecAPI.DTOs
         public int IdCliente { get; set; }
 
         [JsonPropertyName("idTecnico")]
-        public int? IdTecnico { get; set; }  // ✨ Técnico al que se dirige la solicitud
+        public int? IdTecnico { get; set; }  
 
         [JsonPropertyName("idServicio")]
         public int IdServicio { get; set; }
@@ -45,8 +45,10 @@ namespace ServitecAPI.DTOs
         public decimal? MontoPropuesto { get; set; }
         public string? EstadoMonto { get; set; }
         public string? Comentarios { get; set; }
+        public string? MotivoCambio { get; set; } // ✨ Para el reembolso
         public decimal? MontoPagado { get; set; }
         public DateTime? FechaPago { get; set; }
+        public string? PaymentIntentId { get; set; } // ✨
     }
 
     public class AssignTechnicianDto
@@ -59,13 +61,13 @@ namespace ServitecAPI.DTOs
     public class RejectContractionDto
     {
         [JsonPropertyName("motivo")]
-        public string? Motivo { get; set; } // Motivo del rechazo
+        public string? Motivo { get; set; } 
     }
 
     public class AcceptContractionDto
     {
         [JsonPropertyName("idTecnico")]
-        public int IdTecnico { get; set; } // Técnico que acepta
+        public int IdTecnico { get; set; } 
     }
 
     public class ProposeAlternativeDto
@@ -82,7 +84,9 @@ namespace ServitecAPI.DTOs
 
     public class ProposeMountDto
     {
-        public double Monto { get; set; } // Monto propuesto (obligatorio, > 0)
+        public double Monto { get; set; } 
+        [JsonPropertyName("clabeTecnico")]
+        public string? ClabeTecnico { get; set; } // ✨ La tarjeta o CLABE del técnico
     }
 
     public class ContractionResponse
@@ -94,22 +98,25 @@ namespace ServitecAPI.DTOs
         public int IdCliente { get; set; }
         
         [JsonPropertyName("nombreCliente")]
-        public string? NombreCliente { get; set; }  // ✨ Nombre del cliente
+        public string? NombreCliente { get; set; }  
         
         [JsonPropertyName("idTecnico")]
         public int? IdTecnico { get; set; }
         
         [JsonPropertyName("nombreTecnico")]
-        public string? NombreTecnico { get; set; }  // ✨ Nombre del técnico asignado
+        public string? NombreTecnico { get; set; }  
 
         [JsonPropertyName("fotoPerfilCliente")]
-        public string? FotoPerfilCliente { get; set; }  // ✨ Foto del cliente
+        public string? FotoPerfilCliente { get; set; }  
         
         [JsonPropertyName("fotoPerfilTecnico")]
-        public string? FotoPerfilTecnico { get; set; }  // ✨ Foto del técnico
+        public string? FotoPerfilTecnico { get; set; }  
         
         [JsonPropertyName("idServicio")]
         public int IdServicio { get; set; }
+
+        [JsonPropertyName("nombreServicio")]
+        public string? NombreServicio { get; set; }
         
         [JsonPropertyName("estado")]
         public string Estado { get; set; } = "";
@@ -148,13 +155,13 @@ namespace ServitecAPI.DTOs
         public decimal? MontoPropuesto { get; set; }
         
         [JsonPropertyName("puntuacionCliente")]
-        public int? PuntuacionCliente { get; set; }  // ✨ Calificación dejada por el cliente
+        public int? PuntuacionCliente { get; set; }  
         
         [JsonPropertyName("comentarioCliente")]
-        public string? ComentarioCliente { get; set; } // ✨ Comentario dejado por el cliente
+        public string? ComentarioCliente { get; set; } 
         
         [JsonPropertyName("fechaCalificacion")]
-        public DateTime? FechaCalificacion { get; set; } // ✨ Cuándo calificó el cliente
+        public DateTime? FechaCalificacion { get; set; } 
         
         [JsonPropertyName("estadoMonto")]
         public string? EstadoMonto { get; set; }
@@ -182,13 +189,19 @@ namespace ServitecAPI.DTOs
         
         [JsonPropertyName("montoPagado")]
         public decimal? MontoPagado { get; set; }
+        
+        [JsonPropertyName("paymentIntentId")]
+        public string? PaymentIntentId { get; set; } // ✨ Para Stripe Escrow
+        
+        [JsonPropertyName("clabeTecnico")]
+        public string? ClabeTecnico { get; set; } // ✨ Tarjeta/CLABE del técnico
     }
 
-    public class AcceptAmountDto { }  // No necesita cuerpo
+    public class AcceptAmountDto { }  
 
     public class RejectAmountDto
     {
         [JsonPropertyName("motivo")]
-        public string? Motivo { get; set; }  // Motivo del rechazo del monto
+        public string? Motivo { get; set; }  
     }
 }

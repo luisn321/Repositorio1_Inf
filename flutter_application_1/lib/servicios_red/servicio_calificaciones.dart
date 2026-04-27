@@ -7,10 +7,13 @@ import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 const String _urlBase = 'http://10.0.2.2:3000/api';
 
 class ServicioCalificaciones {
-  final AlmacenamientoSeguroServicio _almacenamiento = AlmacenamientoSeguroServicio();
+  final AlmacenamientoSeguroServicio _almacenamiento =
+      AlmacenamientoSeguroServicio();
 
   /// Obtiene todas las calificaciones recibidas por un técnico
-  Future<List<CalificacionModelo>> obtenerCalificacionesPorTecnico(int idTecnico) async {
+  Future<List<CalificacionModelo>> obtenerCalificacionesPorTecnico(
+    int idTecnico,
+  ) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) {
@@ -20,65 +23,77 @@ class ServicioCalificaciones {
       final url = '$_urlBase/ratings?technicianId=$idTecnico';
       debugPrint('📡 [ServicioCalificaciones] GET $url');
 
-      final respuesta = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse(url),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
         final calificaciones = datos
             .map((cal) => CalificacionModelo.desdeJson(cal))
             .toList();
-        debugPrint('✅ Obtenidas ${calificaciones.length} calificaciones para técnico $idTecnico');
+        debugPrint(
+          '✅ Obtenidas ${calificaciones.length} calificaciones para técnico $idTecnico',
+        );
         return calificaciones;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerCalificacionesPorTecnico: $e');
+      debugPrint(' Error en obtenerCalificacionesPorTecnico: $e');
       rethrow;
     }
   }
 
   /// Obtiene una calificación específica por ID
-  Future<CalificacionModelo?> obtenerCalificacionPorId(int idCalificacion) async {
+  Future<CalificacionModelo?> obtenerCalificacionPorId(
+    int idCalificacion,
+  ) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) {
         throw Exception('No authorization token found');
       }
 
-      debugPrint('📡 [ServicioCalificaciones] GET $_urlBase/ratings/$idCalificacion');
+      debugPrint(
+        '📡 [ServicioCalificaciones] GET $_urlBase/ratings/$idCalificacion',
+      );
 
-      final respuesta = await http.get(
-        Uri.parse('$_urlBase/ratings/$idCalificacion'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse('$_urlBase/ratings/$idCalificacion'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         final calificacion = CalificacionModelo.desdeJson(datos);
-        debugPrint('✅ Calificación obtenida: $idCalificacion');
+        debugPrint('Calificación obtenida: $idCalificacion');
         return calificacion;
       } else {
-        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        debugPrint('Status code: ${respuesta.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerCalificacionPorId: $e');
+      debugPrint(' Error en obtenerCalificacionPorId: $e');
       rethrow;
     }
   }
 
   /// Obtiene la calificación de una contratación específica
-  Future<CalificacionModelo?> obtenerCalificacionPorContratacion(int idContratacion) async {
+  Future<CalificacionModelo?> obtenerCalificacionPorContratacion(
+    int idContratacion,
+  ) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) {
@@ -86,30 +101,34 @@ class ServicioCalificaciones {
       }
 
       final url = '$_urlBase/ratings?contractionId=$idContratacion';
-      debugPrint('📡 [ServicioCalificaciones] GET $url');
+      debugPrint(' [ServicioCalificaciones] GET $url');
 
-      final respuesta = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse(url),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         if (datos is List && datos.isNotEmpty) {
           final calificacion = CalificacionModelo.desdeJson(datos.first);
-          debugPrint('✅ Calificación obtenida para contratación $idContratacion');
+          debugPrint(
+            ' Calificación obtenida para contratación $idContratacion',
+          );
           return calificacion;
         }
         return null;
       } else {
-        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        debugPrint(' Status code: ${respuesta.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerCalificacionPorContratacion: $e');
+      debugPrint(' Error en obtenerCalificacionPorContratacion: $e');
       rethrow;
     }
   }
@@ -139,29 +158,31 @@ class ServicioCalificaciones {
         if (comentario != null && comentario.isNotEmpty) 'comment': comentario,
       };
 
-      debugPrint('📡 [ServicioCalificaciones] POST $_urlBase/ratings');
-      debugPrint('📦 Payload: $payload');
-      debugPrint('⭐ Puntuación: $puntuacion/5 - Comentario: $comentario');
+      debugPrint(' [ServicioCalificaciones] POST $_urlBase/ratings');
+      debugPrint(' Payload: $payload');
+      debugPrint(' Puntuación: $puntuacion/5 - Comentario: $comentario');
 
-      final respuesta = await http.post(
-        Uri.parse('$_urlBase/ratings'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(payload),
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .post(
+            Uri.parse('$_urlBase/ratings'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         final calificacion = CalificacionModelo.desdeJson(datos);
-        debugPrint('✅ Calificación creada: ${calificacion.idCalificacion}');
+        debugPrint(' Calificación creada: ${calificacion.idCalificacion}');
         return calificacion;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en crearCalificacion: $e');
+      debugPrint(' Error en crearCalificacion: $e');
       rethrow;
     }
   }
@@ -172,13 +193,18 @@ class ServicioCalificaciones {
       final calificaciones = await obtenerCalificacionesPorTecnico(idTecnico);
       if (calificaciones.isEmpty) return 0.0;
 
-      final suma = calificaciones.fold<int>(0, (acc, cal) => acc + cal.puntuacion);
+      final suma = calificaciones.fold<int>(
+        0,
+        (acc, cal) => acc + cal.puntuacion,
+      );
       final promedio = suma / calificaciones.length;
 
-      debugPrint('📊 Promedio de calificaciones para técnico $idTecnico: $promedio/5');
+      debugPrint(
+        ' Promedio de calificaciones para técnico $idTecnico: $promedio/5',
+      );
       return promedio;
     } catch (e) {
-      debugPrint('❌ Error en obtenerPromedioCalificacionesTecnico: $e');
+      debugPrint(' Error en obtenerPromedioCalificacionesTecnico: $e');
       rethrow;
     }
   }

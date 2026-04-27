@@ -55,7 +55,7 @@ namespace ServitecAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR en ExecuteScalarAsync: {ex.Message}");
+                _logger.LogError($" ERROR en ExecuteScalarAsync: {ex.Message}");
                 _logger.LogError($"   Query: {query}");
                 if (parameters != null)
                 {

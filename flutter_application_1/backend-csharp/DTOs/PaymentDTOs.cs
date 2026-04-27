@@ -29,13 +29,13 @@ namespace ServitecAPI.DTOs
         public string? DescripcionPago { get; set; }
 
         [JsonPropertyName("transactionRef")]
-        public string? TransactionRef { get; set; }  // ✨ NUEVO: Referencia de transacción
+        public string? TransactionRef { get; set; }  // referencia de transaccion
     }
 
     public class UpdatePaymentStatusRequest
     {
         public string EstatusPago { get; set; } = ""; // sin_pagar, pagado, reembolsado
-        public string? EstadoMonto { get; set; } // pendiente, confirmado, rechazado
+        public string? EstadoMonto { get; set; } 
         public string? ReferenciaPago { get; set; }
     }
 

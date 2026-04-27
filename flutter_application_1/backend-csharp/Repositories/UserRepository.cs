@@ -247,7 +247,7 @@ namespace ServitecAPI.Repositories
                 if (resultCliente > 0)
                     return true;
 
-                // Si no está en clientes, eliminar de técnicos
+         
                 var resultTecnico = await _db.ExecuteNonQueryAsync(
                     "DELETE FROM tecnicos WHERE id_tecnico = @id",
                     new Dictionary<string, object> { { "id", id } }
@@ -266,7 +266,7 @@ namespace ServitecAPI.Repositories
         {
             try
             {
-                // Buscar en clientes
+              
                 var resultClientes = await _db.ExecuteScalarAsync<int>(
                     "SELECT COUNT(*) FROM clientes WHERE email = @email",
                     new Dictionary<string, object> { { "email", email } }
@@ -275,7 +275,7 @@ namespace ServitecAPI.Repositories
                 if (resultClientes > 0)
                     return true;
 
-                // Buscar en técnicos
+               
                 var resultTecnicos = await _db.ExecuteScalarAsync<int>(
                     "SELECT COUNT(*) FROM tecnicos WHERE email = @email",
                     new Dictionary<string, object> { { "email", email } }

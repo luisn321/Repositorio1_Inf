@@ -2,11 +2,11 @@ class CalificacionModelo {
   final int idCalificacion;
   final int idContratacion;
   final int idTecnico;
-  final int puntuacion; // 1-5
+  final int puntuacion;
   final String? comentario;
-  final List<String> fotosResenaUrls; // ✨ Múltiples fotos
-  final String? nombreCliente; // ✨
-  final String? fotoPerfilCliente; // ✨
+  final List<String> fotosResenaUrls;
+  final String? nombreCliente;
+  final String? fotoPerfilCliente;
   final DateTime fechaCalificacion;
 
   CalificacionModelo({
@@ -34,7 +34,9 @@ class CalificacionModelo {
       idTecnico: json['idTecnico'] as int? ?? json['id_tecnico'] as int? ?? 0,
       puntuacion: json['puntuacion'] as int? ?? 0,
       comentario: json['comentario'] as String?,
-      fotosResenaUrls: _parseFotos(json['fotosResenaUrls'] ?? json['fotos_resena_urls']),
+      fotosResenaUrls: _parseFotos(
+        json['fotosResenaUrls'] ?? json['fotos_resena_urls'],
+      ),
       nombreCliente:
           json['nombreCliente'] as String? ?? json['nombre_cliente'] as String?,
       fotoPerfilCliente:
@@ -52,7 +54,11 @@ class CalificacionModelo {
     if (fotosData == null) return [];
     if (fotosData is String) {
       if (fotosData.isEmpty) return [];
-      return fotosData.split(',').map((e) => e.trim()).where((url) => url.isNotEmpty).toList();
+      return fotosData
+          .split(',')
+          .map((e) => e.trim())
+          .where((url) => url.isNotEmpty)
+          .toList();
     }
     return [];
   }

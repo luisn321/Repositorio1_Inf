@@ -196,7 +196,7 @@ class _PantallaConfigurarServiciosState
         });
       }
     } catch (e) {
-      debugPrint('❌ Error cargando servicios: $e');
+      debugPrint('Error cargando servicios: $e');
       _snack('No se pudieron cargar tus servicios actuales', warn: true);
     } finally {
       if (mounted) setState(() => _cargando = false);

@@ -109,7 +109,7 @@ namespace ServitecAPI.Services {
         {
             try
             {
-                _logger.LogInformation($"📝 [ContractionService.CreateContractionAsync] INICIANDO");
+                _logger.LogInformation($" [ContractionService.CreateContractionAsync] INICIANDO");
                 _logger.LogInformation($"   ├─ IdCliente: {request.IdCliente}");
                 _logger.LogInformation($"   ├─ IdServicio: {request.IdServicio}");
                 _logger.LogInformation($"   ├─ Descripcion: {request.Descripcion}");
@@ -118,9 +118,9 @@ namespace ServitecAPI.Services {
                 var contraction = new ContractionModel
                 {
                     IdCliente = request.IdCliente,
-                    IdTecnico = request.IdTecnico,  // ✨ Guardar técnico al que se dirige
+                    IdTecnico = request.IdTecnico,  
                     IdServicio = request.IdServicio,
-                    Estado = "Pendiente",  // Debe ser 'Pendiente' según BD
+                    Estado = "Pendiente",  
                     Descripcion = request.Descripcion,
                     FechaEstimada = request.FechaEstimada,
                     DetallesCliente = request.DetallesCliente ?? request.Descripcion,
@@ -134,12 +134,12 @@ namespace ServitecAPI.Services {
 
                 var result = await _repo.CreateAsync(contraction);
 
-                _logger.LogInformation($"✅ ContractionService.CreateAsync retornó ID: {result}");
+                _logger.LogInformation($" ContractionService.CreateAsync retornó ID: {result}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR EN ContractionService.CreateContractionAsync: {ex.GetType().Name}");
+                _logger.LogError($" ERROR EN ContractionService.CreateContractionAsync: {ex.GetType().Name}");
                 _logger.LogError($"   └─ Mensaje: {ex.Message}");
                 _logger.LogError($"   └─ Stack: {ex.StackTrace}");
                 throw;
@@ -165,7 +165,7 @@ namespace ServitecAPI.Services {
                 if (!string.IsNullOrWhiteSpace(request.FotosTrabajoUrls))
                     contraction.FotosTrabajoUrls = request.FotosTrabajoUrls;
                 if (request.MontoPropuesto.HasValue && request.MontoPropuesto > 0)
-                    contraction.MontoPropuesto = request.MontoPropuesto.ToString();
+                    contraction.MontoPropuesto = request.MontoPropuesto;
                 if (!string.IsNullOrWhiteSpace(request.EstadoMonto))
                     contraction.EstadoMonto = request.EstadoMonto;
                 if (!string.IsNullOrWhiteSpace(request.Comentarios))
@@ -174,6 +174,10 @@ namespace ServitecAPI.Services {
                     contraction.MontoPagado = request.MontoPagado;
                 if (request.FechaPago.HasValue)
                     contraction.FechaPago = request.FechaPago;
+                if (!string.IsNullOrWhiteSpace(request.PaymentIntentId))
+                    contraction.PaymentIntentId = request.PaymentIntentId;
+                if (!string.IsNullOrWhiteSpace(request.MotivoCambio))
+                    contraction.MotivoCambio = request.MotivoCambio;
 
                 return await _repo.UpdateAsync(contraction);
             }
@@ -389,8 +393,9 @@ namespace ServitecAPI.Services {
                 if (contraction.Estado != "Aceptada")
                     throw new InvalidOperationException("Solo se puede proponer monto en solicitudes aceptadas");
 
-                contraction.MontoPropuesto = request.Monto.ToString();
+                contraction.MontoPropuesto = (decimal)request.Monto;
                 contraction.EstadoMonto = "Propuesto";
+                contraction.ClabeTecnico = request.ClabeTecnico; // ✨ Guardar la CLABE / Tarjeta
                 contraction.FechaActualizacion = DateTime.UtcNow;
 
                 var success = await _repo.UpdateAsync(contraction);
@@ -422,11 +427,17 @@ namespace ServitecAPI.Services {
                 if (contraction == null)
                     throw new KeyNotFoundException("Contraction not found");
 
-                if (contraction.EstadoMonto != "Propuesto")
-                    throw new InvalidOperationException("No hay monto propuesto para aceptar");
+                if (contraction.EstadoMonto != "Propuesto" && contraction.EstadoMonto != "Aceptado")
+                    throw new InvalidOperationException("No hay monto propuesto válido para aceptar");
+
+                if (contraction.EstadoMonto == "Aceptado")
+                {
+                    _logger.LogInformation($"La solicitud {contractionId} ya estaba aceptada. Continuando...");
+                    return true;
+                }
 
                 contraction.EstadoMonto = "Aceptado";
-                contraction.Estado = "En Progreso";  // Avanza al siguiente estado
+                // contraction.Estado = "En Progreso";  // 🚫 ELIMINADO: Ya no avanza aquí, sino hasta que pague.
                 contraction.FechaActualizacion = DateTime.UtcNow;
 
                 _logger.LogInformation($"Amount accepted for contraction {contractionId}");
@@ -448,7 +459,7 @@ namespace ServitecAPI.Services {
                 if (contraction == null)
                     throw new KeyNotFoundException("Contraction not found");
 
-                if (contraction.EstadoMonto != "Propuesto")
+                if (contraction.EstadoMonto != "Propuesto" && contraction.EstadoMonto != "Aceptado")
                     throw new InvalidOperationException("No hay monto propuesto para rechazar");
 
                 // ✨ Cuando el cliente rechaza el monto, la solicitud se cancela (como rechazo sin propuesta)
@@ -490,7 +501,7 @@ namespace ServitecAPI.Services {
                 HoraSolicitada = contraction.HoraSolicitada,
                 FotosClienteUrls = contraction.FotosClienteUrls,
                 FotosTrabajoUrls = contraction.FotosTrabajoUrls,
-                MontoPropuesto = !string.IsNullOrEmpty(contraction.MontoPropuesto) ? decimal.Parse(contraction.MontoPropuesto) : null,
+                MontoPropuesto = contraction.MontoPropuesto,
                 EstadoMonto = contraction.EstadoMonto ?? "Sin Propuesta",
                 Ubicacion = contraction.Ubicacion,
                 Comentarios = contraction.Comentarios,
@@ -502,7 +513,9 @@ namespace ServitecAPI.Services {
                 MontoPagado = contraction.MontoPagado,
                 PuntuacionCliente = contraction.PuntuacionCliente,
                 ComentarioCliente = contraction.ComentarioCliente,
-                FechaCalificacion = contraction.FechaCalificacion
+                FechaCalificacion = contraction.FechaCalificacion,
+                PaymentIntentId = contraction.PaymentIntentId, // ✨
+                ClabeTecnico = contraction.ClabeTecnico        // ✨
             };
         }
     }

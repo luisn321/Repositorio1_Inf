@@ -11,13 +11,13 @@ namespace ServitecAPI.Services
     public class RatingService : IRatingService
     {
         private readonly IRatingRepository _repo;
-        private readonly ITechnicianRepository _technicianRepo; // ✨ NUEVO
+        private readonly ITechnicianRepository _technicianRepo; 
         private readonly ILogger<RatingService> _logger;
 
         public RatingService(IRatingRepository repo, ITechnicianRepository technicianRepo, ILogger<RatingService> logger)
         {
             _repo = repo;
-            _technicianRepo = technicianRepo; // ✨
+            _technicianRepo = technicianRepo; 
             _logger = logger;
         }
 
@@ -39,21 +39,21 @@ namespace ServitecAPI.Services
 
                 var ratingId = await _repo.CreateAsync(rating);
 
-                // ✨ NUEVO: Actualizar estadísticas del técnico (promedio y conteo)
+                // Actualizar estadísticas del técnico (promedio y conteo)
                 var allRatings = await _repo.GetByTechnicianAsync(request.IdTecnico);
                 if (allRatings.Any())
                 {
                     double average = allRatings.Average(r => r.Puntuacion);
                     int count = allRatings.Count;
                     await _technicianRepo.UpdateRatingAsync(request.IdTecnico, average, count);
-                    _logger.LogInformation($"⭐ Estadísticas actualizadas para técnico {request.IdTecnico}: Promedio {average}, Conteo {count}");
+                    _logger.LogInformation($" Estadísticas actualizadas para técnico {request.IdTecnico}: Promedio {average}, Conteo {count}");
                 }
 
                 return ratingId;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error creating rating: {ex.Message}");
+                _logger.LogError($" Error creating rating: {ex.Message}");
                 throw;
             }
         }

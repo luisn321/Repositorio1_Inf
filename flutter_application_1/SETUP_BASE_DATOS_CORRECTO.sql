@@ -1,16 +1,13 @@
 -- ============================================================
--- SERVITEC - DDL MySQL (VERSIÓN ACTUALIZADA)
--- Base de datos para conectar clientes con técnicos
--- Cambios: Fotos, Hora solicitud, Monto propuesto por técnico
+-- SERVITEC - DDL MySQL (VERSIÓN CONSOLIDADA - PRODUCCIÓN)
+-- Versión: 2.0 (Incluye Stripe Escrow, Propuestas y Calificaciones)
 -- ============================================================
 
--- Crear base de datos
 CREATE DATABASE IF NOT EXISTS servitec CHARACTER SET = 'utf8mb4' COLLATE = 'utf8mb4_general_ci';
 USE servitec;
 
 -- ============================================================
--- TABLA: clientes
--- Almacena datos de clientes que solicitan servicios
+-- 1. TABLA: clientes
 -- ============================================================
 CREATE TABLE clientes (
   id_cliente INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,17 +19,15 @@ CREATE TABLE clientes (
   latitud DOUBLE,
   longitud DOUBLE,
   telefono VARCHAR(30),
-  foto_perfil_url VARCHAR(500),  -- ✨ NUEVO: URL de foto de perfil
+  foto_perfil_url VARCHAR(500),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_active TINYINT(1) DEFAULT 1,
-  INDEX idx_email (email),
-  INDEX idx_created_at (created_at)
+  INDEX idx_email (email)
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- TABLA: servicios
--- Catálogo de servicios disponibles (Electricista, Plomero, etc.)
+-- 2. TABLA: servicios
 -- ============================================================
 CREATE TABLE servicios (
   id_servicio INT AUTO_INCREMENT PRIMARY KEY,
@@ -43,12 +38,12 @@ CREATE TABLE servicios (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- TABLA: tecnicos
--- Datos de técnicos que ofrecen servicios
+-- 3. TABLA: tecnicos
 -- ============================================================
 CREATE TABLE tecnicos (
   id_tecnico INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL,
+  apellido VARCHAR(100),
   email VARCHAR(150) UNIQUE,
   password_hash VARCHAR(255),
   telefono VARCHAR(30),
@@ -58,21 +53,17 @@ CREATE TABLE tecnicos (
   tarifa_hora DECIMAL(10,2),
   experiencia_years INT,
   descripcion TEXT,
-  foto_perfil_url VARCHAR(500),  -- ✨ NUEVO: URL de foto de perfil
+  foto_perfil_url VARCHAR(500),
   calificacion_promedio DECIMAL(3,2) DEFAULT 0.00,
   num_calificaciones INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_active TINYINT(1) DEFAULT 1,
-  INDEX idx_email (email),
-  INDEX idx_latlong (latitud, longitud),
-  INDEX idx_created_at (created_at)
+  INDEX idx_email (email)
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- TABLA: tecnico_servicio
--- Relación many-to-many entre técnicos y servicios
--- Un técnico puede ofrecer múltiples servicios
+-- 4. TABLA: tecnico_servicio (Relación M:N)
 -- ============================================================
 CREATE TABLE tecnico_servicio (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -85,60 +76,49 @@ CREATE TABLE tecnico_servicio (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- TABLA: contrataciones
--- Solicitudes de servicio creadas por clientes
+-- 5. TABLA: contrataciones
+-- Incluye flujo de propuestas, reagendado y Stripe Escrow
 -- ============================================================
 CREATE TABLE contrataciones (
   id_contratacion INT AUTO_INCREMENT PRIMARY KEY,
   id_cliente INT NOT NULL,
   id_tecnico INT DEFAULT NULL,
   id_servicio INT NOT NULL,
-  fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- ✨ ACTUALIZADO: Ya incluye HORA
-  hora_solicitada TIME,  -- ✨ NUEVO: Hora específica que el cliente prefiere
-  fecha_programada DATE,
-  detalles TEXT,
-  fotos_cliente_urls JSON,  -- ✨ NUEVO: Array de URLs de fotos del cliente sobre el problema
-  
-  -- ✨ NUEVO: Campos para monto propuesto por técnico
-  monto_propuesto DECIMAL(12,2) DEFAULT NULL,  -- Monto que el técnico propone
-  fecha_propuesta_monto TIMESTAMP NULL,  -- Cuándo el técnico propuso el monto
-  estado_monto VARCHAR(30) DEFAULT 'Sin Propuesta',  -- 'Sin Propuesta', 'Propuesto', 'Aceptado', 'Rechazado'
-  
-  fotos_trabajo_urls JSON,  -- ✨ NUEVO: Array de URLs de fotos del trabajo realizado
-  
   estado VARCHAR(30) NOT NULL DEFAULT 'Pendiente',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_programada DATETIME, -- Usada como fecha estimada/programada
+  hora_solicitada VARCHAR(20),
+  detalles TEXT,
+  ubicacion TEXT,
+  fotos_cliente_urls TEXT, -- Almacenado como JSON string
+  fotos_trabajo_urls TEXT, -- Almacenado como JSON string
+  
+  -- Lógica de Montos y Pago (Stripe)
+  monto_propuesto DECIMAL(12,2) DEFAULT NULL,
+  estado_monto VARCHAR(30) DEFAULT 'Sin Propuesta',
+  payment_intent_id VARCHAR(255),
+  clabe_tecnico VARCHAR(18),
+  monto_pagado DECIMAL(12,2),
+  fecha_pago DATETIME,
+
+  -- Propuestas de cambio de fecha/hora (Reagendado)
+  fecha_propuesta_cambios TIMESTAMP NULL,
+  fecha_propuesta_solicitada DATE NULL,
+  hora_propuesta_solicitada VARCHAR(20) NULL,
+  motivo_cambio TEXT NULL,
+
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
   FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
   FOREIGN KEY (id_tecnico) REFERENCES tecnicos(id_tecnico) ON DELETE SET NULL,
   FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio),
-  INDEX idx_id_cliente (id_cliente),
-  INDEX idx_id_tecnico (id_tecnico),
   INDEX idx_estado (estado),
-  INDEX idx_estado_monto (estado_monto),  -- ✨ NUEVO: Para queries del técnico
-  INDEX idx_fecha_programada (fecha_programada)
+  INDEX idx_estado_monto (estado_monto)
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- TABLA: pagos
--- Registro de pagos por contrataciones
--- ============================================================
-CREATE TABLE pagos (
-  id_pago INT AUTO_INCREMENT PRIMARY KEY,
-  id_contratacion INT NOT NULL,
-  monto DECIMAL(12,2) NOT NULL,
-  metodo_pago VARCHAR(50),
-  transaction_ref VARCHAR(255),
-  fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  estado_pago VARCHAR(30) DEFAULT 'Pendiente',
-  FOREIGN KEY (id_contratacion) REFERENCES contrataciones(id_contratacion) ON DELETE CASCADE,
-  INDEX idx_estado_pago (estado_pago),
-  INDEX idx_fecha_pago (fecha_pago)
-) ENGINE=InnoDB;
-
--- ============================================================
--- TABLA: calificaciones
--- Reseñas y calificaciones de clientes sobre técnicos
+-- 6. TABLA: calificaciones
 -- ============================================================
 CREATE TABLE calificaciones (
   id_calificacion INT AUTO_INCREMENT PRIMARY KEY,
@@ -146,95 +126,45 @@ CREATE TABLE calificaciones (
   id_tecnico INT,
   puntuacion TINYINT NOT NULL,
   comentario TEXT,
-  foto_resena_url VARCHAR(500),  -- ✨ NUEVO: Foto opcional de la reseña
+  fotos_resena_urls TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_contratacion) REFERENCES contrataciones(id_contratacion) ON DELETE SET NULL,
-  FOREIGN KEY (id_tecnico) REFERENCES tecnicos(id_tecnico) ON DELETE SET NULL,
-  INDEX idx_id_tecnico (id_tecnico),
-  INDEX idx_puntuacion (puntuacion)
+  FOREIGN KEY (id_tecnico) REFERENCES tecnicos(id_tecnico) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- INSERTS DE DATOS INICIALES (Servicios)
+-- RESTRICCIONES Y VALIDACIONES (CONSTRAINTS)
+-- ============================================================
+ALTER TABLE calificaciones ADD CONSTRAINT chk_puntuacion CHECK (puntuacion BETWEEN 1 AND 5);
+
+ALTER TABLE contrataciones ADD CONSTRAINT chk_estado_contratacion 
+  CHECK (estado IN ('Pendiente', 'Aceptada', 'En Progreso', 'Completada', 'Cancelada'));
+
+ALTER TABLE contrataciones ADD CONSTRAINT chk_estado_monto 
+  CHECK (estado_monto IN ('Sin Propuesta', 'Propuesto', 'Aceptado', 'Rechazado', 'Pagado (Retenido)', 'Pago Liberado', 'Reembolsado'));
+
+-- ============================================================
+-- DATOS INICIALES: Servicios
 -- ============================================================
 INSERT INTO servicios (nombre, descripcion, icono) VALUES
 ('Electricista', 'Servicios de instalación y reparación eléctrica', 'Icons.bolt'),
 ('Plomero', 'Reparación de tuberías y sistemas de agua', 'Icons.plumbing'),
-('Carpintero', 'Trabajos de carpintería y carpintería', 'Icons.handyman'),
+('Carpintero', 'Trabajos de carpintería y muebles', 'Icons.handyman'),
 ('Técnico PC', 'Reparación y mantenimiento de computadoras', 'Icons.computer'),
-('Jardinería', 'Cuidado de plantas, tala de arboles y paisajismo', 'Icons.forest'),
-('Reparación Línea Blanca', 'Reparación de electrodomésticos', 'Icons.bolt');
-
--- ============================================================
--- Restricciones y validaciones
--- ============================================================
--- CHECK para puntuaciones (1-5)
-ALTER TABLE calificaciones ADD CONSTRAINT chk_puntuacion CHECK (puntuacion BETWEEN 1 AND 5);
-
--- CHECK para estados válidos de contratación
-ALTER TABLE contrataciones ADD CONSTRAINT chk_estado_contratacion 
-  CHECK (estado IN ('Pendiente', 'Aceptada', 'En Progreso', 'Completada', 'Cancelada'));
-
--- CHECK para estados válidos de monto
-ALTER TABLE contrataciones ADD CONSTRAINT chk_estado_monto
-  CHECK (estado_monto IN ('Sin Propuesta', 'Propuesto', 'Aceptado', 'Rechazado'));
-
--- CHECK para estados válidos de pago
-ALTER TABLE pagos ADD CONSTRAINT chk_estado_pago 
-  CHECK (estado_pago IN ('Pendiente', 'Completado', 'Fallido'));
-
--- ============================================================
--- ÍNDICES ADICIONALES PARA QUERIES FRECUENTES
--- ============================================================
-CREATE INDEX idx_cliente_contrataciones ON contrataciones(id_cliente, estado);
-CREATE INDEX idx_tecnico_calificaciones ON calificaciones(id_tecnico, puntuacion);
-CREATE INDEX idx_tecnico_monto_propuesto ON contrataciones(id_tecnico, estado_monto);
-ALTER TABLE TECNICOS ADD COLUMN apellido VARCHAR(100) AFTER nombre;
-ALTER TABLE CONTRATACIONES ADD COLUMN ubicacion TEXT AFTER fotos_trabajo_urls;
-
--- ============================================================
--- MIGRACIONES PARA FLUJO DE PROPUESTAS
--- ============================================================
-
-USE servitec;
-
--- Agregar columnas para propuesta de cambios
-ALTER TABLE contrataciones 
-  ADD COLUMN fecha_propuesta_cambios TIMESTAMP NULL,
-  ADD COLUMN fecha_propuesta_solicitada DATE NULL,
-  ADD COLUMN hora_propuesta_solicitada TIME NULL,
-  ADD COLUMN motivo_cambio TEXT NULL,
-  ADD COLUMN fecha_pago TIMESTAMP NULL,
-  ADD COLUMN monto_pagado DECIMAL(12,2) NULL;
-
-SELECT '✅ Migración completada' AS resultado;
+('Jardinería', 'Cuidado de plantas y áreas verdes', 'Icons.forest'),
+('Línea Blanca', 'Reparación de electrodomésticos y estufas', 'Icons.bolt');
 
 -- ============================================================
 -- TRIGGER: Actualizar estadísticas de técnico al calificar
 -- ============================================================
--- Cuando se inserta una nueva calificación, automáticamente:
--- 1. Cuenta el total de calificaciones para ese técnico
--- 2. Calcula el promedio de puntuaciones
--- 3. Actualiza los campos en la tabla tecnicos
--- ============================================================
-
 DELIMITER //
-
-CREATE TRIGGER tr_update_tecnico_stats_on_calificacion
+CREATE TRIGGER tr_update_tecnico_stats
 AFTER INSERT ON calificaciones
 FOR EACH ROW
 BEGIN
-  UPDATE tecnicos
-  SET 
-    num_calificaciones = (
-      SELECT COUNT(*) FROM calificaciones 
-      WHERE id_tecnico = NEW.id_tecnico
-    ),
-    calificacion_promedio = (
-      SELECT AVG(puntuacion) FROM calificaciones 
-      WHERE id_tecnico = NEW.id_tecnico
-    )
+  UPDATE tecnicos SET 
+    num_calificaciones = (SELECT COUNT(*) FROM calificaciones WHERE id_tecnico = NEW.id_tecnico),
+    calificacion_promedio = (SELECT AVG(puntuacion) FROM calificaciones WHERE id_tecnico = NEW.id_tecnico)
   WHERE id_tecnico = NEW.id_tecnico;
 END //
-
 DELIMITER ;

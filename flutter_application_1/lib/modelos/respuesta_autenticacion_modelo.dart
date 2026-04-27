@@ -22,12 +22,12 @@ class RespuestaAutenticacionModelo {
   factory RespuestaAutenticacionModelo.desdeJson(Map<String, dynamic> json) {
     return RespuestaAutenticacionModelo(
       token: json['Token'] ?? json['token'] ?? '',
-      usuarioId: json['IdUsuario'] ?? json['UserId'] ?? json['IdUser'] ?? json['userId'] ?? 0,
+      usuarioId: json['idUsuario'] ?? json['IdUsuario'] ?? json['UserId'] ?? json['IdUser'] ?? json['userId'] ?? 0,
       nombre: json['Nombre'] ?? json['Name'] ?? json['nombre'] ?? '',
       correo: json['Correo'] ?? json['Email'] ?? json['email'] ?? '',
-      tipoUsuario: json['TipoUsuario'] ?? json['UserType'] ?? json['tipoUsuario'] ?? 'cliente',
-      latitud: json['Latitud'] != null ? (json['Latitud'] as num).toDouble() : (json['Latitude'] != null ? (json['Latitude'] as num).toDouble() : null),
-      longitud: json['Longitud'] != null ? (json['Longitud'] as num).toDouble() : (json['Longitude'] != null ? (json['Longitude'] as num).toDouble() : null),
+      tipoUsuario: json['tipoUsuario'] ?? json['TipoUsuario'] ?? json['UserType'] ?? 'cliente',
+      latitud: json['latitud'] != null ? (json['latitud'] as num).toDouble() : (json['Latitud'] != null ? (json['Latitud'] as num).toDouble() : (json['Latitude'] != null ? (json['Latitude'] as num).toDouble() : null)),
+      longitud: json['longitud'] != null ? (json['longitud'] as num).toDouble() : (json['Longitud'] != null ? (json['Longitud'] as num).toDouble() : (json['Longitude'] != null ? (json['Longitude'] as num).toDouble() : null)),
     );
   }
 

@@ -47,7 +47,7 @@ namespace ServitecAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error al subir imagen a Cloudinary: {ex.Message}");
+                _logger.LogError($" Error al subir imagen a Cloudinary: {ex.Message}");
                 throw;
             }
         }

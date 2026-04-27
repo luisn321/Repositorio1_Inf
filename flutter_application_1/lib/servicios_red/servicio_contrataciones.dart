@@ -19,7 +19,7 @@ class ServicioContrataciones {
         throw Exception('No authorization token found');
       }
 
-      debugPrint('📡 [ServicioContrataciones] GET $_urlBase/contractions');
+      debugPrint(' [ServicioContrataciones] GET $_urlBase/contractions');
 
       final respuesta = await http
           .get(
@@ -36,13 +36,13 @@ class ServicioContrataciones {
         final contrataciones = datos
             .map((cont) => ContratacionModelo.desdeJson(cont))
             .toList();
-        debugPrint('✅ Obtenidas ${contrataciones.length} contrataciones');
+        debugPrint(' Obtenidas ${contrataciones.length} contrataciones');
         return contrataciones;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerTodasLasContrataciones: $e');
+      debugPrint(' Error en obtenerTodasLasContrataciones: $e');
       rethrow;
     }
   }
@@ -77,11 +77,11 @@ class ServicioContrataciones {
         debugPrint('✅ Contratación obtenida: $idContratacion');
         return contratacion;
       } else {
-        debugPrint('⚠️ Status code: ${respuesta.statusCode}');
+        debugPrint(' Status code: ${respuesta.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerContratacionPorId: $e');
+      debugPrint(' Error en obtenerContratacionPorId: $e');
       rethrow;
     }
   }
@@ -97,7 +97,7 @@ class ServicioContrataciones {
       }
 
       final url = '$_urlBase/contractions?status=$estado';
-      debugPrint('📡 [ServicioContrataciones] GET $url');
+      debugPrint(' [ServicioContrataciones] GET $url');
 
       final respuesta = await http
           .get(
@@ -115,14 +115,14 @@ class ServicioContrataciones {
             .map((cont) => ContratacionModelo.desdeJson(cont))
             .toList();
         debugPrint(
-          '✅ Obtenidas ${contrataciones.length} contrataciones con estado $estado',
+          ' Obtenidas ${contrataciones.length} contrataciones con estado $estado',
         );
         return contrataciones;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerContratacionesPorEstado: $e');
+      debugPrint(' Error en obtenerContratacionesPorEstado: $e');
       rethrow;
     }
   }
@@ -136,7 +136,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] GET $_urlBase/contractions/pending',
+        ' [ServicioContrataciones] GET $_urlBase/contractions/pending',
       );
 
       final respuesta = await http
@@ -216,13 +216,13 @@ class ServicioContrataciones {
 
       if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
-        debugPrint('📦 RESPUESTA COMPLETA DEL BACKEND: $datos');
+        debugPrint(' RESPUESTA COMPLETA DEL BACKEND: $datos');
         debugPrint('   ├─ HoraSolicitada: ${datos['HoraSolicitada']}');
         debugPrint('   ├─ Ubicacion: ${datos['Ubicacion']}');
         debugPrint('   ├─ NombreCliente: ${datos['NombreCliente']}');
         debugPrint('   └─ Descripcion: ${datos['Descripcion']}');
         final contratacion = ContratacionModelo.desdeJson(datos);
-        debugPrint('✅ Contratación creada: ${contratacion.idContratacion}');
+        debugPrint(' Contratación creada: ${contratacion.idContratacion}');
         debugPrint(
           '   ├─ horaSolicitadaStr: ${contratacion.horaSolicitadaStr}',
         );
@@ -233,7 +233,7 @@ class ServicioContrataciones {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en crearContratacion: $e');
+      debugPrint(' Error en crearContratacion: $e');
       rethrow;
     }
   }
@@ -252,9 +252,9 @@ class ServicioContrataciones {
       final payload = {'status': nuevoEstado};
 
       debugPrint(
-        '📡 [ServicioContrataciones] PUT $_urlBase/contractions/$idContratacion',
+        '[ServicioContrataciones] PUT $_urlBase/contractions/$idContratacion',
       );
-      debugPrint('📦 Payload: $payload');
+      debugPrint(' Payload: $payload');
 
       final respuesta = await http
           .put(
@@ -270,13 +270,13 @@ class ServicioContrataciones {
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         final contratacion = ContratacionModelo.desdeJson(datos);
-        debugPrint('✅ Estado actualizado: $nuevoEstado');
+        debugPrint('Estado actualizado: $nuevoEstado');
         return contratacion;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en actualizarEstadoContratacion: $e');
+      debugPrint('Error en actualizarEstadoContratacion: $e');
       rethrow;
     }
   }
@@ -297,7 +297,7 @@ class ServicioContrataciones {
       debugPrint(
         '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/assign',
       );
-      debugPrint('📦 Body: $payload');
+      debugPrint(' Body: $payload');
 
       final respuesta = await http
           .post(
@@ -313,13 +313,13 @@ class ServicioContrataciones {
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         final contratacion = ContratacionModelo.desdeJson(datos);
-        debugPrint('✅ Técnico asignado: $idTecnico');
+        debugPrint(' Técnico asignado: $idTecnico');
         return contratacion;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en asignarTecnico: $e');
+      debugPrint(' Error en asignarTecnico: $e');
       rethrow;
     }
   }
@@ -333,7 +333,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/complete',
+        ' [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/complete',
       );
 
       final respuesta = await http
@@ -349,13 +349,13 @@ class ServicioContrataciones {
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         final contratacion = ContratacionModelo.desdeJson(datos);
-        debugPrint('✅ Contratación completada: $idContratacion');
+        debugPrint('Contratación completada: $idContratacion');
         return contratacion;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en completarContratacion: $e');
+      debugPrint(' Error en completarContratacion: $e');
       rethrow;
     }
   }
@@ -369,7 +369,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/cancel',
+        ' [ServicioContrataciones] POST $_urlBase/contractions/$idContratacion/cancel',
       );
 
       final respuesta = await http
@@ -385,13 +385,13 @@ class ServicioContrataciones {
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
         final contratacion = ContratacionModelo.desdeJson(datos);
-        debugPrint('✅ Contratación cancelada: $idContratacion');
+        debugPrint(' Contratación cancelada: $idContratacion');
         return contratacion;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en cancelarContratacion: $e');
+      debugPrint(' Error en cancelarContratacion: $e');
       rethrow;
     }
   }
@@ -405,7 +405,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] GET $_urlBase/contractions/client/$idCliente',
+        ' [ServicioContrataciones] GET $_urlBase/contractions/client/$idCliente',
       );
 
       final respuesta = await http
@@ -420,15 +420,15 @@ class ServicioContrataciones {
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
-        debugPrint('📦 RESPUESTA CLIENTE (${datos.length} items):');
+        debugPrint(' RESPUESTA CLIENTE (${datos.length} items):');
         final solicitudes = datos.map((sol) {
           debugPrint(
-            '   📌 Solicitud ${sol['idContratacion']}: hora=${sol['horaSolicitada']}, ubicacion=${sol['ubicacion']}, cliente=${sol['nombreCliente']}',
+            '    Solicitud ${sol['idContratacion']}: hora=${sol['horaSolicitada']}, ubicacion=${sol['ubicacion']}, cliente=${sol['nombreCliente']}',
           );
           return ContratacionModelo.desdeJson(sol);
         }).toList();
         debugPrint(
-          '✅ Obtenidas ${solicitudes.length} solicitudes del cliente $idCliente',
+          ' Obtenidas ${solicitudes.length} solicitudes del cliente $idCliente',
         );
         for (var s in solicitudes) {
           debugPrint(
@@ -440,7 +440,7 @@ class ServicioContrataciones {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerMisSolicitudes: $e');
+      debugPrint(' Error en obtenerMisSolicitudes: $e');
       rethrow;
     }
   }
@@ -454,7 +454,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] GET $_urlBase/contractions/technician/$idTecnico',
+        ' [ServicioContrataciones] GET $_urlBase/contractions/technician/$idTecnico',
       );
 
       final respuesta = await http
@@ -480,12 +480,12 @@ class ServicioContrataciones {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerMisContratos: $e');
+      debugPrint(' Error en obtenerMisContratos: $e');
       rethrow;
     }
   }
 
-  // ✨ NUEVOS: Para flujo de aceptación/rechazo
+  //  Para flujo de aceptación/rechazo
   /// TÉCNICO: Rechaza una solicitud
   Future<bool> rechazarSolicitud(int idSolicitud, String motivo) async {
     try {
@@ -510,13 +510,13 @@ class ServicioContrataciones {
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
-        debugPrint('✅ Solicitud rechazada: $idSolicitud');
+        debugPrint(' Solicitud rechazada: $idSolicitud');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en rechazarSolicitud: $e');
+      debugPrint(' Error en rechazarSolicitud: $e');
       rethrow;
     }
   }
@@ -530,7 +530,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/accept',
+        ' [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/accept',
       );
 
       final respuesta = await http
@@ -545,13 +545,13 @@ class ServicioContrataciones {
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
-        debugPrint('✅ Solicitud aceptada: $idSolicitud');
+        debugPrint(' Solicitud aceptada: $idSolicitud');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en aceptarSolicitud: $e');
+      debugPrint(' Error en aceptarSolicitud: $e');
       rethrow;
     }
   }
@@ -594,20 +594,20 @@ class ServicioContrataciones {
 
       if (respuesta.statusCode == 200) {
         debugPrint(
-          '✅ Propuesta alternativa enviada para solicitud $idSolicitud',
+          ' Propuesta alternativa enviada para solicitud $idSolicitud',
         );
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en proponerPropuesta: $e');
+      debugPrint(' Error en proponerPropuesta: $e');
       rethrow;
     }
   }
 
   /// TÉCNICO: Propone un monto para la solicitud (PARTE 2)
-  Future<bool> proponerMonto(int idSolicitud, double monto) async {
+  Future<bool> proponerMonto(int idSolicitud, double monto, {String? clabeTecnico}) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) {
@@ -620,7 +620,7 @@ class ServicioContrataciones {
       }
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/propose-amount (monto: \$$monto)',
+        ' [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/propose-amount (monto: \$$monto)',
       );
 
       final respuesta = await http
@@ -630,18 +630,21 @@ class ServicioContrataciones {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
             },
-            body: jsonEncode({'monto': monto}),
+            body: jsonEncode({
+              'monto': monto,
+              if (clabeTecnico != null) 'clabeTecnico': clabeTecnico,
+            }),
           )
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
-        debugPrint('✅ Monto propuesto: \$$monto para solicitud $idSolicitud');
+        debugPrint('Monto propuesto: \$$monto para solicitud $idSolicitud');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en proponerMonto: $e');
+      debugPrint(' Error en proponerMonto: $e');
       rethrow;
     }
   }
@@ -667,15 +670,13 @@ class ServicioContrataciones {
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
-        debugPrint(
-          '✅ Monto aceptado para solicitud $idSolicitud → En Progreso',
-        );
+        debugPrint(' Monto aceptado para solicitud $idSolicitud → En Progreso');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en aceptarMonto: $e');
+      debugPrint(' Error en aceptarMonto: $e');
       rethrow;
     }
   }
@@ -687,7 +688,7 @@ class ServicioContrataciones {
       if (token == null) throw Exception('No authorization token found');
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/reject-amount',
+        ' [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/reject-amount',
       );
 
       final respuesta = await http
@@ -704,18 +705,18 @@ class ServicioContrataciones {
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
-        debugPrint('✅ Monto rechazado para solicitud $idSolicitud');
+        debugPrint(' Monto rechazado para solicitud $idSolicitud');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en rechazarMonto: $e');
+      debugPrint(' Error en rechazarMonto: $e');
       rethrow;
     }
   }
 
-  // ✨ NUEVO: Registrar pago completado
+  //Registrar pago completado
   Future<bool> registrarPago(
     int idSolicitud,
     double monto,
@@ -725,7 +726,7 @@ class ServicioContrataciones {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) throw Exception('No authorization token found');
 
-      debugPrint('📡 [ServicioContrataciones] POST $_urlBase/payments');
+      debugPrint(' [ServicioContrataciones] POST $_urlBase/payments');
 
       final respuesta = await http
           .post(
@@ -751,19 +752,19 @@ class ServicioContrataciones {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en registrarPago: $e');
+      debugPrint(' Error en registrarPago: $e');
       rethrow;
     }
   }
 
-  // ✨ NUEVO: Técnico marca solicitud como completada
+  //  Técnico marca solicitud como completada
   Future<bool> marcarCompletada(int idSolicitud) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) throw Exception('No authorization token found');
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/complete',
+        ' [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/complete',
       );
 
       final respuesta = await http
@@ -777,18 +778,18 @@ class ServicioContrataciones {
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200 || respuesta.statusCode == 201) {
-        debugPrint('✅ Solicitud $idSolicitud marcada como completada');
+        debugPrint(' Solicitud $idSolicitud marcada como completada');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en marcarCompletada: $e');
+      debugPrint(' Error en marcarCompletada: $e');
       rethrow;
     }
   }
 
-  // ✨ NUEVO: Calificar servicio del técnico
+  //Calificar servicio del técnico
   Future<bool> calificarTecnico(
     int idContratacion,
     int idTecnico,
@@ -800,7 +801,7 @@ class ServicioContrataciones {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) throw Exception('No authorization token found');
 
-      debugPrint('📡 [ServicioContrataciones] POST $_urlBase/ratings');
+      debugPrint(' [ServicioContrataciones] POST $_urlBase/ratings');
 
       final respuesta = await http
           .post(
@@ -820,25 +821,25 @@ class ServicioContrataciones {
           .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200 || respuesta.statusCode == 201) {
-        debugPrint('✅ Calificación enviada para solicitud $idContratacion');
+        debugPrint(' Calificación enviada para solicitud $idContratacion');
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en calificarTecnico: $e');
+      debugPrint(' Error en calificarTecnico: $e');
       rethrow;
     }
   }
 
-  // ✨ NUEVOS: Para aceptar/rechazar propuestas alternativas
+  //  Para aceptar/rechazar propuestas alternativas
   Future<bool> aceptarPropuesta(int idSolicitud) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) throw Exception('No authorization token found');
 
       debugPrint(
-        '📡 [ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/accept-propuesta',
+        '[ServicioContrataciones] POST $_urlBase/contractions/$idSolicitud/accept-propuesta',
       );
 
       final respuesta = await http
@@ -853,7 +854,7 @@ class ServicioContrataciones {
 
       return respuesta.statusCode == 200;
     } catch (e) {
-      debugPrint('❌ Error en aceptarPropuesta: $e');
+      debugPrint(' Error en aceptarPropuesta: $e');
       rethrow;
     }
   }
@@ -879,12 +880,12 @@ class ServicioContrataciones {
 
       return respuesta.statusCode == 200;
     } catch (e) {
-      debugPrint('❌ Error en rechazarPropuesta: $e');
+      debugPrint('Error en rechazarPropuesta: $e');
       rethrow;
     }
   }
 
-  // ✨ NUEVOS: Gestión de servicios del técnico
+  // Gestión de servicios del técnico
   /// Obtiene los servicios actuales de un técnico
   Future<List<int>> obtenerServiciosConfigurados(int idTecnico) async {
     try {
@@ -892,7 +893,7 @@ class ServicioContrataciones {
       if (token == null) throw Exception('No authorization token found');
 
       debugPrint(
-        '📡 [ServicioContrataciones] GET $_urlBase/technicians/$idTecnico',
+        '[ServicioContrataciones] GET $_urlBase/technicians/$idTecnico',
       );
 
       final respuesta = await http
@@ -916,13 +917,13 @@ class ServicioContrataciones {
           if (id != null) ids.add(int.parse(id.toString()));
         }
 
-        debugPrint('✅ Servicios configurados para técnico $idTecnico: $ids');
+        debugPrint(' Servicios configurados para técnico $idTecnico: $ids');
         return ids;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerServiciosConfigurados: $e');
+      debugPrint('Error en obtenerServiciosConfigurados: $e');
       rethrow;
     }
   }
@@ -939,7 +940,7 @@ class ServicioContrataciones {
       debugPrint(
         '📡 [ServicioContrataciones] PUT $_urlBase/technicians/$idTecnico/services',
       );
-      debugPrint('📦 Body: $serviceIds');
+      debugPrint(' Body: $serviceIds');
 
       final respuesta = await http
           .put(
@@ -954,26 +955,26 @@ class ServicioContrataciones {
 
       if (respuesta.statusCode == 200) {
         debugPrint(
-          '✅ Servicios actualizados exitosamente para técnico $idTecnico',
+          ' Servicios actualizados exitosamente para técnico $idTecnico',
         );
         return true;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en actualizarServiciosConfigurados: $e');
+      debugPrint(' Error en actualizarServiciosConfigurados: $e');
       rethrow;
     }
   }
 
-  /// ✨ Obtiene las reseñas (comentarios/estrellas) de un técnico
+  /// Obtiene las reseñas (comentarios/estrellas) de un técnico
   Future<List<CalificacionModelo>> obtenerResenasTecnico(int idTecnico) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) throw Exception('No authorization token found');
 
       debugPrint(
-        '📡 [ServicioContrataciones] GET $_urlBase/ratings/technician/$idTecnico',
+        '[ServicioContrataciones] GET $_urlBase/ratings/technician/$idTecnico',
       );
 
       final respuesta = await http
@@ -993,8 +994,95 @@ class ServicioContrataciones {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerResenasTecnico: $e');
+      debugPrint(' Error en obtenerResenasTecnico: $e');
       rethrow;
+    }
+  }
+
+  // ✨ NUEVO: STRIPE METHODS ✨
+
+  Future<Map<String, dynamic>> crearPaymentIntent(int idContratacion) async {
+    try {
+      final token = await _almacenamiento.obtenerToken();
+      if (token == null) throw Exception('No authorization token found');
+
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/create-payment-intent'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      print("Response crear intent ${respuesta.statusCode}: ${respuesta.body}");
+      if (respuesta.statusCode == 200) {
+        return json.decode(respuesta.body);
+      } else {
+        throw Exception('Error al crear pago: ${respuesta.body}');
+      }
+    } catch (e) {
+      debugPrint(' Error en crearPaymentIntent: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> confirmarPago(int idContratacion) async {
+    try {
+      final token = await _almacenamiento.obtenerToken();
+      if (token == null) throw Exception('Token no encontrado');
+
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/confirm-payment'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) return true;
+      throw Exception('Error al confirmar pago en backend: ${respuesta.body}');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> verificarCompletado(int idContratacion) async {
+    try {
+      final token = await _almacenamiento.obtenerToken();
+      if (token == null) throw Exception('Token no encontrado');
+
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/verify-completion'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) return true;
+      throw Exception('Error al liberar pago: ${respuesta.body}');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> reembolsarPago(int idContratacion) async {
+    try {
+      final token = await _almacenamiento.obtenerToken();
+      if (token == null) throw Exception('Token no encontrado');
+
+      final respuesta = await http.post(
+        Uri.parse('$_urlBase/contractions/$idContratacion/refund'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (respuesta.statusCode == 200) return true;
+      throw Exception('Error al reembolsar pago: ${respuesta.body}');
+    } catch (e) {
+      return false;
     }
   }
 }

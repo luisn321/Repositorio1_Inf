@@ -255,16 +255,16 @@ namespace ServitecAPI.Repositories
             {
                 IdPago = (int)data["id_pago"],
                 IdContratacion = (int)data["id_contratacion"],
-                IdTecnico = 0,  // No existe en tabla pagos
-                IdCliente = 0,  // No existe en tabla pagos
+                IdTecnico = 0, 
+                IdCliente = 0, 
                 Monto = Convert.ToDouble(data["monto"] ?? 0),
-                MontoProyectado = 0,  // No existe en tabla pagos
-                EstadoMonto = "pagado",  // No existe en tabla pagos
+                MontoProyectado = 0, 
+                EstadoMonto = "pagado",  
                 MetodoPago = (string)data.GetValueOrDefault("metodo_pago", ""),
                 EstatusPago = (string)data.GetValueOrDefault("estado_pago", "Pendiente"),
                 FechaPago = Convert.ToDateTime(data.GetValueOrDefault("fecha_pago", DateTime.Now)),
-                FechaVencimiento = DateTime.Now,  // No existe en tabla pagos
-                DescripcionPago = null,  // No existe en tabla pagos
+                FechaVencimiento = DateTime.Now, 
+                DescripcionPago = null,  
                 ReferenciaPago = data.ContainsKey("transaction_ref") ? (string?)data["transaction_ref"] : null,
                 FechaRegistro = Convert.ToDateTime(data.GetValueOrDefault("fecha_pago", DateTime.Now)),
                 FechaActualizacion = null

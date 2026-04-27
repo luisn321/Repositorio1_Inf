@@ -164,10 +164,6 @@ namespace ServitecAPI.Controllers
         }
     }
 
-    // DEPRECATED: TechniciansController removed - using TechnicianController instead
-    // All endpoints moved to Controllers/TechnicianController.cs
-    // DEPRECATED: ContractionsController removed - using ContractionController instead
-    // All endpoints moved to Controllers/ContractionController.cs
 
     public class UpdateTechnicianServicesRequest
     {
@@ -186,6 +182,6 @@ namespace ServitecAPI.Controllers
         public string? Password { get; set; }
     }
 
-    // UpdateTechnicianRequest moved to DTOs/TechnicianDTOs.cs - REFACTORING IN PROGRESS
+
 }
    

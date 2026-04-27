@@ -23,14 +23,14 @@ namespace ServitecAPI.Controllers
             {
                 if (file == null) return BadRequest(new { message = "No se proporcionó ningún archivo" });
 
-                _logger.LogInformation($"📸 Subiendo imagen: {file.FileName} a la carpeta {folder}");
+                _logger.LogInformation($" Subiendo imagen: {file.FileName} a la carpeta {folder}");
                 var imageUrl = await _uploadService.UploadImageAsync(file, folder);
 
                 return Ok(new { url = imageUrl, success = true });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error en UploadController: {ex.Message}");
+                _logger.LogError($"Error en UploadController: {ex.Message}");
                 return StatusCode(500, new { message = "Error al subir la imagen", error = ex.Message });
             }
         }

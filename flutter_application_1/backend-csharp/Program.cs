@@ -19,6 +19,8 @@ builder.Services.AddControllers()
 // Configurar Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
+// Configurar Stripe
+Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 // Registrar Data Access Layer
 builder.Services.AddScoped<DatabaseService>();

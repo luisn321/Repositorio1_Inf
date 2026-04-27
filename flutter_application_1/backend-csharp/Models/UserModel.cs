@@ -8,7 +8,7 @@ namespace ServitecAPI.Models
         public string Email { get; set; } = "";
         public string Contrasena { get; set; } = "";
         public string? Telefono { get; set; }
-        public string TipoUsuario { get; set; } = "cliente"; // "cliente" or "tecnico"
+        public string TipoUsuario { get; set; } = "cliente";
         public string? DireccionText { get; set; }
         public string? UbicacionText { get; set; }
         public double Latitud { get; set; }

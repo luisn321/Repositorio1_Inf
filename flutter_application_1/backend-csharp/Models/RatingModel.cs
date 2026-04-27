@@ -9,9 +9,9 @@ namespace ServitecAPI.Models
         public int? IdTecnico { get; set; }
         public int Puntuacion { get; set; }
         public string? Comentario { get; set; }
-        public string? FotosResenaUrls { get; set; }    // ✨ Soporta múltiples URLs (CSV o JSON)
-        public string? NombreCliente { get; set; }      // ✨
-        public string? FotoPerfilCliente { get; set; }   // ✨
+        public string? FotosResenaUrls { get; set; }    // Soporta múltiples URLs (CSV o JSON)
+        public string? NombreCliente { get; set; }      
+        public string? FotoPerfilCliente { get; set; }   
         public DateTime CreatedAt { get; set; }
     }
 }

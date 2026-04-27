@@ -32,7 +32,7 @@ namespace ServitecAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR EN CREATE RATING: {ex.Message}");
+                _logger.LogError($" ERROR EN CREATE RATING: {ex.Message}");
                 return StatusCode(500, new { message = "Error creating rating" });
             }
         }

@@ -6,8 +6,6 @@ import 'HomeCliente.dart';
 import 'HomeTecnico.dart';
 import 'pantalla_registro.dart';
 
-/// Pantalla de inicio de sesión (login) — Rediseñada
-/// Permite a usuarios iniciar sesión con correo y contraseña
 class PantallaInicioSesion extends StatefulWidget {
   const PantallaInicioSesion({super.key});
 
@@ -30,12 +28,12 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion>
   bool _ocultarContrasena = true;
 
   // ── Design tokens ────────────────────────────────────────────────────────────
-  static const Color _verde       = Color(0xFF1A5C38); // darkGreen base
-  static const Color _verdeClaro  = Color(0xFF247A4A);
+  static const Color _verde = Color(0xFF1A5C38);
+  static const Color _verdeClaro = Color(0xFF247A4A);
   static const Color _verdeOscuro = Color(0xFF0F3B22);
-  static const Color _acento      = Color(0xFF4CAF82); // mint accent
-  static const Color _blanco      = Colors.white;
-  static const Color _grisTexto   = Color(0xFF8FA89B);
+  static const Color _acento = Color(0xFF4CAF82);
+  static const Color _blanco = Colors.white;
+  static const Color _grisTexto = Color(0xFF8FA89B);
   // ─────────────────────────────────────────────────────────────────────────────
 
   @override
@@ -51,13 +49,13 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion>
       parent: _animationController,
       curve: Curves.easeOut,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _animationController.forward();
   }
@@ -338,9 +336,9 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion>
           ),
         ),
         GestureDetector(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const PantallaRegistro()),
-          ),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const PantallaRegistro())),
           child: Text(
             'Regístrate',
             style: GoogleFonts.dmSans(
@@ -365,10 +363,7 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion>
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.dmSans(
-        color: _grisTexto,
-        fontSize: 14,
-      ),
+      hintStyle: GoogleFonts.dmSans(color: _grisTexto, fontSize: 14),
       filled: true,
       fillColor: const Color(0xFFF4F7F5),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -398,7 +393,10 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion>
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Color(0xFFE05252), width: 2),
       ),
-      errorStyle: GoogleFonts.dmSans(fontSize: 12, color: const Color(0xFFE05252)),
+      errorStyle: GoogleFonts.dmSans(
+        fontSize: 12,
+        color: const Color(0xFFE05252),
+      ),
     );
   }
 
@@ -407,7 +405,10 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion>
       controller: _controladorCorreo,
       keyboardType: TextInputType.emailAddress,
       style: GoogleFonts.dmSans(color: _verdeOscuro, fontSize: 14),
-      decoration: _inputDeco(hint: 'tu@correo.com', icon: Icons.alternate_email_rounded),
+      decoration: _inputDeco(
+        hint: 'tu@correo.com',
+        icon: Icons.alternate_email_rounded,
+      ),
       validator: ValidadoresAutenticacion.validarCorreo,
     );
   }

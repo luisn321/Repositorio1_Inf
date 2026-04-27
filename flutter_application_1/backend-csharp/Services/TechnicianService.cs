@@ -107,7 +107,7 @@ namespace ServitecAPI.Services
             try
             {
                 if (radius <= 0)
-                    radius = 5; // Default 5 km
+                    radius = 5;
 
                 var technicians = await _repo.GetByLocationAsync(latitude, longitude, radius);
                 var responses = new List<TechnicianResponse>();

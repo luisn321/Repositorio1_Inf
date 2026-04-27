@@ -1,10 +1,11 @@
 class ContratacionModelo {
   final int idContratacion;
   final int idCliente;
-  final String? nombreCliente; // ✨ Del JOIN con clientes
+  final String? nombreCliente;
   final int? idTecnico;
-  final String? nombreTecnico; // ✨ Del JOIN con tecnicos
+  final String? nombreTecnico;
   final int idServicio;
+  final String? nombreServicio; // ✨ NUEVO
   // ✅ ESTADOS VÁLIDOS en BD: 'Pendiente', 'Aceptada', 'En Progreso', 'Completada', 'Cancelada'
   final String estado;
   final DateTime fechaSolicitud;
@@ -15,26 +16,30 @@ class ContratacionModelo {
   final String? estadoMonto;
   final List<String>? fotosClienteUrls;
   final List<String>? fotosTrabajoUrls;
-  final String? fotoPerfilCliente; // ✨ Nuevo
-  final String? fotoPerfilTecnico; // ✨ Nuevo
+  final String? fotoPerfilCliente;
+  final String? fotoPerfilTecnico;
   final String? ubicacion;
   final DateTime? horaSolicitud;
-  final String? horaSolicitadaStr; // ✨ Hora como string (HH:mm) desde BD
+  final String? horaSolicitadaStr;
 
-  // ✨ NUEVOS: Para flujo de propuestas alternativas (PARTE 1)
+  // Para flujo de propuestas alternativas
   final DateTime? fechaPropuestaCambios;
   final DateTime? fechaPropuestaSolicitada;
   final String? horaPropuestaSolicitada;
   final String? motivoCambio;
 
-  // ✨ NUEVOS: Para flujo de pagos (PARTE 3)
+  // Para flujo de pagos
   final DateTime? fechaPago;
   final double? montoPagado;
 
-  // ✨ NUEVOS: Para flujo de calificaciones (PARTE 4)
-  final int? puntuacionCliente; // Puntuación que dejó el cliente (1-5)
-  final String? comentarioCliente; // Comentario/reseña del cliente
-  final DateTime? fechaCalificacion; // Cuándo calificó
+  // Para flujo de calificaciones
+  final int? puntuacionCliente;
+  final String? comentarioCliente;
+  final DateTime? fechaCalificacion;
+
+  // Stripe Escrow
+  final String? paymentIntentId;
+  final String? clabeTecnico;
 
   ContratacionModelo({
     required this.idContratacion,
@@ -43,6 +48,7 @@ class ContratacionModelo {
     this.idTecnico,
     this.nombreTecnico,
     required this.idServicio,
+    this.nombreServicio,
     required this.estado,
     required this.fechaSolicitud,
     this.fechaEstimada,
@@ -65,6 +71,8 @@ class ContratacionModelo {
     this.fechaCalificacion,
     this.fotoPerfilCliente,
     this.fotoPerfilTecnico,
+    this.paymentIntentId,
+    this.clabeTecnico,
   });
 
   factory ContratacionModelo.desdeJson(Map<String, dynamic> json) {
@@ -77,7 +85,7 @@ class ContratacionModelo {
         json['detalles'] as String? ??
         json['Detalles'] as String?;
 
-    // La hora viene como 'horaSolicitada' (camelCase del backend)
+    // La hora viene como 'horaSolicitada
     final horaRaw =
         json['horaSolicitada'] ??
         json['HoraSolicitada'] ??
@@ -128,6 +136,10 @@ class ContratacionModelo {
           json['IdServicio'] as int? ??
           json['id_servicio'] as int? ??
           0,
+      nombreServicio:
+          json['nombreServicio'] as String? ??
+          json['NombreServicio'] as String? ??
+          json['nombre_servicio'] as String?,
       estado:
           json['estado'] as String? ??
           json['Estado'] as String? ??
@@ -236,6 +248,14 @@ class ContratacionModelo {
           json['fotoPerfilTecnico'] as String? ??
           json['FotoPerfilTecnico'] as String? ??
           json['foto_tecnico'] as String?,
+      paymentIntentId:
+          json['paymentIntentId'] as String? ??
+          json['PaymentIntentId'] as String? ??
+          json['payment_intent_id'] as String?,
+      clabeTecnico:
+          json['clabeTecnico'] as String? ??
+          json['ClabeTecnico'] as String? ??
+          json['clabe_tecnico'] as String?,
     );
   }
 
@@ -305,6 +325,8 @@ class ContratacionModelo {
       'motivo_cambio': motivoCambio,
       'fecha_pago': fechaPago?.toIso8601String(),
       'monto_pagado': montoPagado,
+      'payment_intent_id': paymentIntentId,
+      'clabe_tecnico': clabeTecnico,
     };
   }
 

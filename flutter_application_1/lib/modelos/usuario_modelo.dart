@@ -5,17 +5,17 @@ class UsuarioModelo {
   final String nombre;
   final String apellido;
   final String correo;
-  final String tipoUsuario; // 'cliente' o 'tecnico'
+  final String tipoUsuario;
   final String telefono;
   final double latitud;
   final double longitud;
   final String? fotoPerfilUrl;
-  final String? direccionTexto; // Para clientes - dirección
-  final String? ubicacionTexto; // Para técnicos - ubicación
-  final double? tarifaHora; // Solo para técnicos
-  final double? calificacionPromedio; // Solo para técnicos
-  final String? descripcion; // Solo para técnicos - descripción de especialidad
-  final int? anosExperiencia; // Solo para técnicos - años de experiencia
+  final String? direccionTexto;
+  final String? ubicacionTexto;
+  final double? tarifaHora;
+  final double? calificacionPromedio;
+  final String? descripcion;
+  final int? anosExperiencia;
 
   UsuarioModelo({
     required this.id,
@@ -37,48 +37,63 @@ class UsuarioModelo {
 
   /// Crea una instancia desde JSON (respuesta del servidor)
   factory UsuarioModelo.desdeJson(Map<String, dynamic> json) {
-    print('\n🔬 PARSEANDO USUARIO MODELO');
-    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    
+    print('\n PARSEANDO USUARIO MODELO');
+
     // Mapeo flexible para diferentes formatos de respuesta del servidor
-    int id = json['IdUsuario'] ?? json['UserId'] ?? json['IdUser'] ?? json['id'] ?? json['id_usuario'] ?? 0;
+    int id =
+        json['idUsuario'] ??
+        json['IdUsuario'] ??
+        json['UserId'] ??
+        json['IdUser'] ??
+        json['id'] ??
+        json['id_usuario'] ??
+        0;
     String nombre = json['Nombre'] ?? json['Name'] ?? json['nombre'] ?? '';
-    String apellido = json['Apellido'] ?? json['LastName'] ?? json['apellido'] ?? '';
+    String apellido =
+        json['Apellido'] ?? json['LastName'] ?? json['apellido'] ?? '';
     String correo = json['Correo'] ?? json['Email'] ?? json['email'] ?? '';
-    
-    // 🔧 MEJORADO: Mapeo más robusto del tipoUsuario
-    String tipoUsuario = (json['TipoUsuario'] ?? 
-        json['UserType'] ?? 
-        json['tipo_usuario'] ?? 
-        json['tipoUsuario'] ?? 
-        'cliente').toString().toLowerCase().trim();
-    
+
+    // Mapeo más robusto del tipoUsuario
+    String tipoUsuario =
+        (json['TipoUsuario'] ??
+                json['UserType'] ??
+                json['tipo_usuario'] ??
+                json['tipoUsuario'] ??
+                'cliente')
+            .toString()
+            .toLowerCase()
+            .trim();
+
     // Normalizar valores comunes
     if (tipoUsuario.isEmpty || tipoUsuario == 'null') {
       tipoUsuario = 'cliente';
     }
-    
-    print("📌 ID: $id");
-    print("📌 Nombre: $nombre");
-    print("📌 Apellido: $apellido");
-    print("📌 Correo: $correo");
-    print("📌 TipoUsuario: $tipoUsuario");
-    
-    String telefono = json['Telefono'] ?? json['Phone'] ?? json['telefono'] ?? '';
-    print("📌 Teléfono: $telefono");
-    
+
+    print("ID: $id");
+    print("Nombre: $nombre");
+    print("Apellido: $apellido");
+    print("Correo: $correo");
+    print("TipoUsuario: $tipoUsuario");
+
+    String telefono =
+        json['Telefono'] ?? json['Phone'] ?? json['telefono'] ?? '';
+    print("Teléfono: $telefono");
+
     double latitud = 0;
     double longitud = 0;
     try {
-      latitud = (json['Latitud'] ?? json['Latitude'] ?? json['latitud'] ?? 0).toDouble();
-      longitud = (json['Longitud'] ?? json['Longitude'] ?? json['longitud'] ?? 0).toDouble();
+      latitud = (json['Latitud'] ?? json['Latitude'] ?? json['latitud'] ?? 0)
+          .toDouble();
+      longitud =
+          (json['Longitud'] ?? json['Longitude'] ?? json['longitud'] ?? 0)
+              .toDouble();
     } catch (e) {
       print('Error parsing latitud/longitud: $e');
     }
-    
-    print("📌 Latitud: $latitud");
-    print("📌 Longitud: $longitud");
-    
+
+    print("Latitud: $latitud");
+    print("Longitud: $longitud");
+
     // Tarifa
     double? tarifaHora;
     try {
@@ -88,26 +103,36 @@ class UsuarioModelo {
         tarifaHora = double.tryParse(json['tarifa_hora'].toString());
       }
     } catch (e) {
-      print('❌ Error parsing tarifaHora: $e');
+      print('Error parsing tarifaHora: $e');
     }
-    print("📌 TarifaHora: $tarifaHora (raw: TarifaHora=${json['TarifaHora']}, tarifa_hora=${json['tarifa_hora']})");
-    
+    print(
+      "TarifaHora: $tarifaHora (raw: TarifaHora=${json['TarifaHora']}, tarifa_hora=${json['tarifa_hora']})",
+    );
+
     // CalificacionPromedio
     double? calificacionPromedio;
     try {
       if (json['CalificacionPromedio'] != null) {
-        calificacionPromedio = double.tryParse(json['CalificacionPromedio'].toString());
+        calificacionPromedio = double.tryParse(
+          json['CalificacionPromedio'].toString(),
+        );
       } else if (json['calificacion_promedio'] != null) {
-        calificacionPromedio = double.tryParse(json['calificacion_promedio'].toString());
+        calificacionPromedio = double.tryParse(
+          json['calificacion_promedio'].toString(),
+        );
       }
     } catch (e) {
-      print('❌ Error parsing calificacionPromedio: $e');
+      print('Error parsing calificacionPromedio: $e');
     }
-    print("📌 CalificacionPromedio: $calificacionPromedio (raw: ${json['CalificacionPromedio']} / ${json['calificacion_promedio']})");
-    
+    print(
+      "CalificacionPromedio: $calificacionPromedio (raw: ${json['CalificacionPromedio']} / ${json['calificacion_promedio']})",
+    );
+
     String? descripcion = json['Descripcion'] ?? json['descripcion'];
-    print("📌 Descripcion: $descripcion (raw: Descripcion=${json['Descripcion']}, descripcion=${json['descripcion']})");
-    
+    print(
+      "Descripcion: $descripcion (raw: Descripcion=${json['Descripcion']}, descripcion=${json['descripcion']})",
+    );
+
     int? anosExperiencia;
     try {
       if (json['AnosExperiencia'] != null) {
@@ -116,21 +141,32 @@ class UsuarioModelo {
         anosExperiencia = int.tryParse(json['anos_experiencia'].toString());
       }
     } catch (e) {
-      print('❌ Error parsing anosExperiencia: $e');
+      print('Error parsing anosExperiencia: $e');
     }
-    print("📌 AnosExperiencia: $anosExperiencia (raw: ${json['AnosExperiencia']} / ${json['anos_experiencia']})");
-    
-    String? fotoPerfilUrl = json['FotoPerfilUrl'] ?? json['foto_perfil_url'] ?? json['fotoPerfilUrl'];
-    print("📌 FotoPerfilUrl: $fotoPerfilUrl");
-    
-    String? direccionTexto = json['DireccionTexto'] ?? json['direccion_text'] ?? json['direccionTexto'];
-    print("📌 DireccionTexto: $direccionTexto");
-    
-    String? ubicacionTexto = json['UbicacionTexto'] ?? json['ubicacion_text'] ?? json['ubicacionTexto'];
-    print("📌 UbicacionTexto: $ubicacionTexto");
-    
+    print(
+      "AnosExperiencia: $anosExperiencia (raw: ${json['AnosExperiencia']} / ${json['anos_experiencia']})",
+    );
+
+    String? fotoPerfilUrl =
+        json['FotoPerfilUrl'] ??
+        json['foto_perfil_url'] ??
+        json['fotoPerfilUrl'];
+    print("FotoPerfilUrl: $fotoPerfilUrl");
+
+    String? direccionTexto =
+        json['DireccionTexto'] ??
+        json['direccion_text'] ??
+        json['direccionTexto'];
+    print(" DireccionTexto: $direccionTexto");
+
+    String? ubicacionTexto =
+        json['UbicacionTexto'] ??
+        json['ubicacion_text'] ??
+        json['ubicacionTexto'];
+    print(" UbicacionTexto: $ubicacionTexto");
+
     print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    
+
     return UsuarioModelo(
       id: id,
       nombre: nombre,
@@ -171,7 +207,6 @@ class UsuarioModelo {
     };
   }
 
-  /// Retorna nombre completo del usuario
   String obtenerNombreCompleto() => '$nombre $apellido';
 
   /// Indica si el usuario es técnico
@@ -188,5 +223,6 @@ class UsuarioModelo {
   }
 
   @override
-  String toString() => 'UsuarioModelo(id: $id, nombre: $nombre, tipoUsuario: $tipoUsuario)';
+  String toString() =>
+      'UsuarioModelo(id: $id, nombre: $nombre, tipoUsuario: $tipoUsuario)';
 }

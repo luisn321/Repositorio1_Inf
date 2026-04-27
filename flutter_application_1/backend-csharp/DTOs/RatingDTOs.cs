@@ -28,8 +28,8 @@ namespace ServitecAPI.DTOs
         public int Puntuacion { get; set; }
         public string? Comentario { get; set; }
         public string? FotosResenaUrls { get; set; }
-        public string? NombreCliente { get; set; }      // ✨ Nombre del que calificó
-        public string? FotoPerfilCliente { get; set; }   // ✨ Foto del que calificó
+        public string? NombreCliente { get; set; }     
+        public string? FotoPerfilCliente { get; set; } 
         public DateTime CreatedAt { get; set; }
     }
 }

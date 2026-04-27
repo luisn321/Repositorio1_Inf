@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ServitecAPI.DTOs;
 using ServitecAPI.Services;
+using Stripe;
 
 namespace ServitecAPI.Controllers
 {
@@ -490,6 +491,143 @@ namespace ServitecAPI.Controllers
             {
                 _logger.LogError($"Error: {ex.Message}");
                 return StatusCode(500, new { message = "Error rejecting amount" });
+            }
+        }
+
+        // ✨ NUEVO: Endpoint para Stripe - Crear Payment Intent (Escrow)
+        [HttpPost("{id}/create-payment-intent")]
+        public async Task<IActionResult> CreatePaymentIntent(int id)
+        {
+            try
+            {
+                var contraction = await _service.GetContractionAsync(id);
+                if (contraction == null) return NotFound("Contratación no encontrada");
+                if (contraction.EstadoMonto != "Aceptado" && contraction.EstadoMonto != "Propuesto") 
+                    return BadRequest("El monto aún no ha sido cotizado o aceptado.");
+
+                _logger.LogInformation($"Iniciando creación de PaymentIntent para contratación {id}");
+
+                // Stripe usa centavos ($10.00 = 1000)
+                long amountInCents = (long)(contraction.MontoPropuesto ?? 0) * 100;
+                
+                var options = new PaymentIntentCreateOptions
+                {
+                    Amount = amountInCents,
+                    Currency = "mxn",
+                    PaymentMethodTypes = new List<string> { "card" },
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "ContractionId", id.ToString() },
+                        { "ClientId", contraction.IdCliente.ToString() },
+                        { "TechnicianId", contraction.IdTecnico?.ToString() ?? "" },
+                        { "ClabeTecnico", contraction.ClabeTecnico ?? "Sin especificar" }
+                    }
+                };
+                
+                var service = new PaymentIntentService();
+                var paymentIntent = await service.CreateAsync(options);
+
+                var updateReq = new UpdateContractionDto
+                {
+                    PaymentIntentId = paymentIntent.Id
+                };
+                await _service.UpdateContractionAsync(id, updateReq);
+
+                _logger.LogInformation($"PaymentIntent {paymentIntent.Id} creado con éxito. Pendiente de pago...");
+                
+                return Ok(new { 
+                    clientSecret = paymentIntent.ClientSecret,
+                    paymentIntentId = paymentIntent.Id
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error Stripe Create Intent: {ex.Message}");
+                return StatusCode(500, new { message = "Error de pasarela", error = ex.Message });
+            }
+        }
+
+        // ✨ NUEVO: Endpoint para confirmar que el pago fue exitoso en Stripe y avanzar la orden
+        [HttpPost("{id}/confirm-payment")]
+        public async Task<IActionResult> ConfirmPayment(int id)
+        {
+            try
+            {
+                var contraction = await _service.GetContractionAsync(id);
+                if (contraction == null) return NotFound("Contratación no encontrada");
+
+                var updateReq = new UpdateContractionDto
+                {
+                    Estado = "En Progreso",
+                    EstadoMonto = "Pagado (Retenido)",
+                    MontoPagado = contraction.MontoPropuesto,
+                    FechaPago = DateTime.UtcNow
+                };
+                await _service.UpdateContractionAsync(id, updateReq);
+
+                return Ok(new { message = "Pago confirmado (Retenido en Escrow). Servicio En Progreso." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error confirmando pago", error = ex.Message });
+            }
+        }
+
+        // ✨ NUEVO: Endpoint para verificar la finalización del escrow (Liberar dinero)
+        [HttpPost("{id}/verify-completion")]
+        public async Task<IActionResult> VerifyCompletion(int id)
+        {
+            try
+            {
+                var contraction = await _service.GetContractionAsync(id);
+                if (contraction == null) return NotFound("Contratación no encontrada");
+                
+                var updateReq = new UpdateContractionDto
+                {
+                    Estado = "Completada",
+                    EstadoMonto = "Pago Liberado"
+                };
+                await _service.UpdateContractionAsync(id, updateReq);
+                
+                return Ok(new { message = "Pago liberado con éxito. (Dinero transferido a " + contraction.ClabeTecnico + ")" });
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, new { message = "Error liberando pago", error=ex.Message });
+            }
+        }
+
+        // ✨ NUEVO: Endpoint para Refund Automático en caso de "No se realizó servicio"
+        [HttpPost("{id}/refund")]
+        public async Task<IActionResult> RefundPayment(int id)
+        {
+            try
+            {
+                var contraction = await _service.GetContractionAsync(id);
+                if (contraction == null) return NotFound("Contratación no encontrada");
+
+                if (!string.IsNullOrEmpty(contraction.PaymentIntentId))
+                {
+                    var refundOptions = new RefundCreateOptions { PaymentIntent = contraction.PaymentIntentId };
+                    var refundService = new RefundService();
+                    var refund = await refundService.CreateAsync(refundOptions);
+                    _logger.LogInformation($"Stripe Refund {refund.Id} ejecutado.");
+                }
+
+                var updateReq = new UpdateContractionDto
+                {
+                    Estado = "Cancelada",
+                    EstadoMonto = "Reembolsado",
+                    MotivoCambio = "Servicio no realizado por el técnico. Dinero devuelto al cliente."
+                };
+                await _service.UpdateContractionAsync(id, updateReq);
+
+                return Ok(new { message = "Reembolso procesado exitosamente." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error Stripe Refund: {ex.Message}");
+                return StatusCode(500, new { message = "Error procesando reembolso", error = ex.Message });
             }
         }
 

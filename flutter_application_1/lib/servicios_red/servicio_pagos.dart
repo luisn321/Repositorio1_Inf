@@ -7,7 +7,8 @@ import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 const String _urlBase = 'http://10.0.2.2:3000/api';
 
 class ServicioPagos {
-  final AlmacenamientoSeguroServicio _almacenamiento = AlmacenamientoSeguroServicio();
+  final AlmacenamientoSeguroServicio _almacenamiento =
+      AlmacenamientoSeguroServicio();
 
   /// Obtiene todos los pagos del usuario
   Future<List<PagoModelo>> obtenerTodosLosPagos() async {
@@ -19,24 +20,26 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments');
 
-      final respuesta = await http.get(
-        Uri.parse('$_urlBase/payments'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse('$_urlBase/payments'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
         final pagos = datos.map((pago) => PagoModelo.desdeJson(pago)).toList();
-        debugPrint('✅ Obtenidos ${pagos.length} pagos');
+        debugPrint('Obtenidos ${pagos.length} pagos');
         return pagos;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
       }
     } catch (e) {
-      debugPrint('❌ Error en obtenerTodosLosPagos: $e');
+      debugPrint(' Error en obtenerTodosLosPagos: $e');
       rethrow;
     }
   }
@@ -51,13 +54,15 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments/$idPago');
 
-      final respuesta = await http.get(
-        Uri.parse('$_urlBase/payments/$idPago'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse('$_urlBase/payments/$idPago'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
@@ -75,7 +80,9 @@ class ServicioPagos {
   }
 
   /// Obtiene los pagos de una contratación específica
-  Future<List<PagoModelo>> obtenerPagosPorContratacion(int idContratacion) async {
+  Future<List<PagoModelo>> obtenerPagosPorContratacion(
+    int idContratacion,
+  ) async {
     try {
       final token = await _almacenamiento.obtenerToken();
       if (token == null) {
@@ -85,18 +92,22 @@ class ServicioPagos {
       final url = '$_urlBase/payments?contractionId=$idContratacion';
       debugPrint('📡 [ServicioPagos] GET $url');
 
-      final respuesta = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse(url),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
         final pagos = datos.map((pago) => PagoModelo.desdeJson(pago)).toList();
-        debugPrint('✅ Obtenidos ${pagos.length} pagos de contratación $idContratacion');
+        debugPrint(
+          '✅ Obtenidos ${pagos.length} pagos de contratación $idContratacion',
+        );
         return pagos;
       } else {
         throw Exception('Error ${respuesta.statusCode}: ${respuesta.body}');
@@ -117,13 +128,15 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments/pending');
 
-      final respuesta = await http.get(
-        Uri.parse('$_urlBase/payments/pending'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse('$_urlBase/payments/pending'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
@@ -149,13 +162,15 @@ class ServicioPagos {
 
       debugPrint('📡 [ServicioPagos] GET $_urlBase/payments/overdue');
 
-      final respuesta = await http.get(
-        Uri.parse('$_urlBase/payments/overdue'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .get(
+            Uri.parse('$_urlBase/payments/overdue'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body) as List;
@@ -192,14 +207,16 @@ class ServicioPagos {
       debugPrint('📡 [ServicioPagos] POST $_urlBase/payments');
       debugPrint('📦 Payload: $payload');
 
-      final respuesta = await http.post(
-        Uri.parse('$_urlBase/payments'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(payload),
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .post(
+            Uri.parse('$_urlBase/payments'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
@@ -231,14 +248,16 @@ class ServicioPagos {
       debugPrint('📡 [ServicioPagos] PUT $_urlBase/payments/$idPago/status');
       debugPrint('📦 Payload: $payload');
 
-      final respuesta = await http.put(
-        Uri.parse('$_urlBase/payments/$idPago/status'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(payload),
-      ).timeout(const Duration(seconds: 30));
+      final respuesta = await http
+          .put(
+            Uri.parse('$_urlBase/payments/$idPago/status'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
