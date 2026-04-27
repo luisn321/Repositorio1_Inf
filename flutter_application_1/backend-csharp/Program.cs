@@ -60,11 +60,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configurar middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
