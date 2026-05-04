@@ -207,5 +207,40 @@ namespace ServitecAPI.Controllers
                 return StatusCode(500, new { error = "An error occurred during profile update" });
             }
         }
+        [HttpDelete("delete-account")]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            try
+            {
+                var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(new { error = "Token not provided" });
+
+                var userId = _authService.GetUserIdFromToken(token);
+                if (!userId.HasValue)
+                    return Unauthorized(new { error = "Invalid token" });
+
+                var userType = _authService.GetUserTypeFromToken(token);
+                if (string.IsNullOrEmpty(userType))
+                    return Unauthorized(new { error = "Invalid user type in token" });
+
+                _logger.LogInformation($"🚨 Request to delete account for user ID: {userId}, Type: {userType}");
+
+                var success = await _authService.DeleteAccountAsync(userId.Value, userType);
+
+                if (!success)
+                    return BadRequest(new { error = "Could not delete account" });
+
+                _logger.LogInformation($"✅ Account deleted successfully: {userId}");
+
+                return Ok(new { success = true, message = "Account deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Delete account error: {ex.Message}");
+                return StatusCode(500, new { error = "An error occurred while deleting account. Ensure you don't have pending requests." });
+            }
+        }
     }
 }

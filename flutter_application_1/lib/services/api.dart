@@ -278,6 +278,33 @@ class ApiService {
     await _secureStorage.delete(key: 'auth_token');
   }
 
+  /// DELETE /auth/delete-account
+  Future<bool> deleteAccount() async {
+    try {
+      final token = await getToken();
+      if (token == null) return false;
+
+      final response = await _client.delete(
+        Uri.parse('$API_BASE_URL/auth/delete-account'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await logout(); // Limpiar sesión tras borrar cuenta
+        return true;
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Error al eliminar cuenta');
+      }
+    } catch (e) {
+      print('Error en deleteAccount: $e');
+      rethrow;
+    }
+  }
+
   // ==================== SERVICES ====================
 
   /// GET /services

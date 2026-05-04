@@ -14,5 +14,6 @@ namespace ServitecAPI.Services
         Task<dynamic?> GetUserProfileAsync(int userId, string userType);
         Task<dynamic?> UpdateClientProfileAsync(UpdateProfileRequest request);
         Task<dynamic?> UpdateTechnicianProfileAsync(UpdateProfileRequest request);
+        Task<bool> DeleteAccountAsync(int userId, string userType);
     }
 }

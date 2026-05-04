@@ -251,6 +251,37 @@ class ServicioAutenticacion {
     }
   }
 
+  /// Elimina la cuenta del usuario actual de forma permanente
+  Future<bool> eliminarCuenta() async {
+    try {
+      print('🚨 Intentando eliminar cuenta...');
+      final token = await _almacenamientoSeguro.obtenerToken();
+      if (token == null) throw Exception('No hay sesión activa.');
+
+      final respuesta = await http.delete(
+        Uri.parse('$_urlBase/delete-account'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('📡 Respuesta eliminación: ${respuesta.statusCode}');
+      
+      if (respuesta.statusCode == 200) {
+        await cerrarSesion(); // Limpiar datos locales
+        print('✅ Cuenta eliminada y sesión cerrada localmente');
+        return true;
+      } else {
+        final error = jsonDecode(respuesta.body);
+        throw Exception(error['error'] ?? 'No se pudo eliminar la cuenta. Asegúrate de no tener solicitudes pendientes.');
+      }
+    } catch (e) {
+      print('❌ Error eliminando cuenta: $e');
+      rethrow;
+    }
+  }
+
   /// Obtiene el token de autenticación actual
   Future<String?> obtenerToken() async {
     try {

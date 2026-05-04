@@ -7,6 +7,8 @@ import '../modelos/usuario_modelo.dart';
 import '../servicios_red/servicio_autenticacion.dart';
 import '../servicios_red/servicio_imagenes.dart';
 import '../utilidades/visor_imagenes_universal.dart';
+import 'pantalla_inicio_sesion.dart';
+
 
 // ── Design tokens (sistema unificado Servitec) ───────────────────────────────
 const Color _verde = Color(0xFF1A5C38);
@@ -347,6 +349,226 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente>
     VisorImagenUniversal.abrir(context, _usuarioActual!.fotoPerfilUrl!, 'avatar_cliente');
   }
 
+  // ── Métodos de Cuenta ────────────────────────────────────────────────────
+  void _mostrarMenuOpciones() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Opciones de cuenta',
+              style: GoogleFonts.sora(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: _verde,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _verde.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.logout_rounded, color: _verde, size: 20),
+              ),
+              title: Text(
+                'Cerrar sesión',
+                style: GoogleFonts.dmSans(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                'Salir de tu cuenta actual',
+                style: GoogleFonts.dmSans(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmarCerrarSesion();
+              },
+            ),
+            const Divider(height: 1, indent: 70),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _errorColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_forever_rounded, color: _errorColor, size: 20),
+              ),
+              title: Text(
+                'Eliminar cuenta',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w600,
+                  color: _errorColor,
+                ),
+              ),
+              subtitle: Text(
+                'Borrar tus datos permanentemente',
+                style: GoogleFonts.dmSans(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmarEliminarCuenta();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmarCerrarSesion() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          '¿Cerrar sesión?',
+          style: GoogleFonts.sora(fontWeight: FontWeight.w700, color: _verde),
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas salir de tu cuenta?',
+          style: GoogleFonts.dmSans(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.dmSans(color: _grisTexto),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _ejecutarCerrarSesion();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _verde,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(
+              'Cerrar sesión',
+              style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ejecutarCerrarSesion() async {
+    try {
+      await _servicio.cerrarSesion();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const PantallaInicioSesion()),
+        (route) => false,
+      );
+    } catch (e) {
+      _mostrarSnack('Error al cerrar sesión', error: true);
+    }
+  }
+
+  void _confirmarEliminarCuenta() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: _errorColor),
+            const SizedBox(width: 10),
+            Text(
+              'Eliminar cuenta',
+              style: GoogleFonts.sora(fontWeight: FontWeight.w700, color: _errorColor),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Esta acción es irreversible.',
+              style: GoogleFonts.dmSans(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Al eliminar tu cuenta, todos tus datos personales, historial de servicios y preferencias serán borrados de nuestra base de datos conforme a la normativa de protección de datos.',
+              style: GoogleFonts.dmSans(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '¿Deseas continuar?',
+              style: GoogleFonts.dmSans(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.dmSans(color: _grisTexto),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _ejecutarEliminarCuenta();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _errorColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(
+              'Eliminar permanentemente',
+              style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ejecutarEliminarCuenta() async {
+    setState(() => _esCargando = true);
+    try {
+      final exito = await _servicio.eliminarCuenta();
+      if (exito && mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const PantallaInicioSesion()),
+          (route) => false,
+        );
+        _mostrarSnack('Tu cuenta ha sido eliminada exitosamente.');
+      }
+    } catch (e) {
+      if (mounted) {
+        _mostrarSnack(e.toString().replaceAll('Exception: ', ''), error: true);
+        setState(() => _esCargando = false);
+      }
+    }
+  }
+
   // ── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -525,46 +747,71 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente>
                       ),
                       // Botón editar / cancelar
                       if (!_esCargando)
-                        GestureDetector(
-                          onTap: _toggleEdicion,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _enEdicion
-                                  ? Colors.white.withValues(alpha: 0.15)
-                                  : Colors.white.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _enEdicion
-                                      ? Icons.close_rounded
-                                      : Icons.edit_outlined,
-                                  color: Colors.white,
-                                  size: 15,
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: _toggleEdicion,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 7,
                                 ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  _enEdicion ? 'Cancelar' : 'Editar',
-                                  style: GoogleFonts.dmSans(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                                decoration: BoxDecoration(
+                                  color: _enEdicion
+                                      ? Colors.white.withValues(alpha: 0.15)
+                                      : Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1,
                                   ),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _enEdicion
+                                          ? Icons.close_rounded
+                                          : Icons.edit_outlined,
+                                      color: Colors.white,
+                                      size: 15,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      _enEdicion ? 'Cancelar' : 'Editar',
+                                      style: GoogleFonts.dmSans(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: _mostrarMenuOpciones,
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.more_vert_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+
                     ],
                   ),
 

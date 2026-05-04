@@ -609,5 +609,37 @@ namespace ServitecAPI.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        public async Task<bool> DeleteAccountAsync(int userId, string userType)
+        {
+            try
+            {
+                _logger.LogInformation($"🗑️ Intentando eliminar cuenta de usuario ID: {userId}, Tipo: {userType}");
+
+                // Determinar tabla y columna de ID según el tipo de usuario
+                string normalizedType = userType.ToLower();
+                string table = (normalizedType == "tecnico" || normalizedType == "technician") ? "tecnicos" : "clientes";
+                string idColumn = (normalizedType == "tecnico" || normalizedType == "technician") ? "id_tecnico" : "id_cliente";
+
+                var parameters = new Dictionary<string, object> { { "@id", userId } };
+                var query = $"DELETE FROM {table} WHERE {idColumn} = @id";
+
+                var result = await _db.ExecuteNonQueryAsync(query, parameters);
+                
+                if (result > 0)
+                {
+                    _logger.LogInformation($"✅ Cuenta eliminada exitosamente para usuario ID: {userId}");
+                    return true;
+                }
+
+                _logger.LogWarning($"⚠️ No se encontró la cuenta para eliminar. Usuario ID: {userId}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Error al eliminar cuenta: {ex.Message}");
+                // Si hay un error de clave foránea, el mensaje indicará que no se puede eliminar por tener historial
+                throw;
+            }
+        }
     }
 }

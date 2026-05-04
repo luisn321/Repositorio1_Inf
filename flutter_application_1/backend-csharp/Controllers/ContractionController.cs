@@ -149,13 +149,13 @@ namespace ServitecAPI.Controllers
 
                 _logger.LogInformation($"✅ CONTRATACIÓN CREADA EXITOSAMENTE con ID: {contractionId}");
 
-                // ✨ Retornar el objeto completo para que Flutter lo pueda parsear
+               
                 var contraction = await _service.GetContractionAsync(contractionId);
                 return Ok(contraction);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR EN CREATE: {ex.GetType().Name}");
+                _logger.LogError($" ERROR EN CREATE: {ex.GetType().Name}");
                 _logger.LogError($"   └─ Mensaje: {ex.Message}");
                 _logger.LogError($"   └─ Stack: {ex.StackTrace}");
                 
@@ -255,7 +255,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVOS: Para flujo de aceptación/rechazo
+        
         [HttpPost("{id}/reject")]
         public async Task<IActionResult> Reject(int id, [FromBody] RejectContractionDto request)
         {
@@ -275,12 +275,12 @@ namespace ServitecAPI.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning($"⚠️ Invalid operation: {ex.Message}");
+                _logger.LogWarning($" Invalid operation: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR EN REJECT {id}: {ex.GetType().Name}");
+                _logger.LogError($" ERROR EN REJECT {id}: {ex.GetType().Name}");
                 _logger.LogError($"   └─ Mensaje: {ex.Message}");
                 _logger.LogError($"   └─ Stack: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Error rejecting contraction", details = ex.Message });
@@ -301,31 +301,31 @@ namespace ServitecAPI.Controllers
             }
             catch (KeyNotFoundException)
             {
-                _logger.LogWarning($"⚠️ Contraction {id} not found");
+                _logger.LogWarning($" Contraction {id} not found");
                 return NotFound(new { message = "Contraction not found" });
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning($"⚠️ Invalid operation: {ex.Message}");
+                _logger.LogWarning($" Invalid operation: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR EN ACCEPT {id}: {ex.GetType().Name}");
+                _logger.LogError($" ERROR EN ACCEPT {id}: {ex.GetType().Name}");
                 _logger.LogError($"   └─ Mensaje: {ex.Message}");
                 _logger.LogError($"   └─ Stack: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Error accepting contraction", details = ex.Message });
             }
         }
 
-        // ✨ NUEVO: Técnico propone alternativa (fecha/hora/motivo diferente)
+        // Técnico propone alternativa (fecha/hora/motivo diferente)
         [HttpPost("{id}/propose-propuesta")]
         public async Task<IActionResult> ProposePropuesta(int id, [FromBody] ProposeAlternativeDto request)
         {
             try
             {
                 if (request == null) return BadRequest(new { message = "Request body is required" });
-                _logger.LogInformation($"💡 [PROPOSE-PROPUESTA] Proponiendo alternativa para solicitud {id}");
+                _logger.LogInformation($" [PROPOSE-PROPUESTA] Proponiendo alternativa para solicitud {id}");
                 _logger.LogInformation($"   ├─ fechaPropuestaSolicitada: {request.FechaPropuestaSolicitada}");
                 _logger.LogInformation($"   ├─ horaPropuestaSolicitada: {request.HoraPropuestaSolicitada}");
                 _logger.LogInformation($"   └─ motivoCambio: {request.MotivoCambio}");
@@ -338,24 +338,24 @@ namespace ServitecAPI.Controllers
             }
             catch (KeyNotFoundException)
             {
-                _logger.LogWarning($"⚠️ Contraction {id} not found");
+                _logger.LogWarning($" Contraction {id} not found");
                 return NotFound(new { message = "Contraction not found" });
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning($"⚠️ Invalid operation: {ex.Message}");
+                _logger.LogWarning($" Invalid operation: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ ERROR EN PROPOSE-PROPUESTA {id}: {ex.GetType().Name}");
+                _logger.LogError($" ERROR EN PROPOSE-PROPUESTA {id}: {ex.GetType().Name}");
                 _logger.LogError($"   └─ Mensaje: {ex.Message}");
                 _logger.LogError($"   └─ Stack: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Error proposing alternative", details = ex.Message });
             }
         }
 
-        // ✨ NUEVO: Cliente acepta la propuesta alternativa (fecha/hora) del técnico
+        //Cliente acepta la propuesta alternativa (fecha/hora) del técnico
         [HttpPost("{id}/accept-propuesta")]
         public async Task<IActionResult> AcceptPropuesta(int id)
         {
@@ -383,7 +383,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Cliente rechaza la propuesta alternativa (fecha/hora) del técnico
+        // Cliente rechaza la propuesta alternativa (fecha/hora) del técnico
         [HttpPost("{id}/reject-propuesta")]
         public async Task<IActionResult> RejectPropuesta(int id)
         {
@@ -437,7 +437,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Cliente acepta el monto propuesto por el técnico
+        // Cliente acepta el monto propuesto por el técnico
         [HttpPost("{id}/accept-amount")]
         public async Task<IActionResult> AcceptAmount(int id)
         {
@@ -466,7 +466,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Cliente rechaza el monto propuesto por el técnico
+        // Cliente rechaza el monto propuesto por el técnico
         [HttpPost("{id}/reject-amount")]
         public async Task<IActionResult> RejectAmount(int id, [FromBody] RejectAmountDto request)
         {
@@ -494,7 +494,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Endpoint para Stripe - Crear Payment Intent (Escrow)
+        // Endpoint para Stripe - Crear Payment Intent (Escrow)
         [HttpPost("{id}/create-payment-intent")]
         public async Task<IActionResult> CreatePaymentIntent(int id)
         {
@@ -547,7 +547,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Endpoint para confirmar que el pago fue exitoso en Stripe y avanzar la orden
+        // Endpoint para confirmar que el pago fue exitoso en Stripe y avanzar la orden
         [HttpPost("{id}/confirm-payment")]
         public async Task<IActionResult> ConfirmPayment(int id)
         {
@@ -573,7 +573,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Endpoint para verificar la finalización del escrow (Liberar dinero)
+        // Endpoint para verificar la finalización del escrow (Liberar dinero)
         [HttpPost("{id}/verify-completion")]
         public async Task<IActionResult> VerifyCompletion(int id)
         {
@@ -597,7 +597,7 @@ namespace ServitecAPI.Controllers
             }
         }
 
-        // ✨ NUEVO: Endpoint para Refund Automático en caso de "No se realizó servicio"
+        // Endpoint para Refund Automático en caso de "No se realizó servicio"
         [HttpPost("{id}/refund")]
         public async Task<IActionResult> RefundPayment(int id)
         {
