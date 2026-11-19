@@ -1,7 +1,7 @@
 /// Constantes de la aplicación Servitec
 class ConstantesAplicacion {
   // --- URLs Y ENDPOINTS ---
-  static const String urlBase = 'https://repositorio1-inf.onrender.com';
+  static const String urlBase = 'https://repositorio1-inf-tnbs.onrender.com';
   static const String urlBaseApi = '$urlBase/api';
 
   // Endpoints

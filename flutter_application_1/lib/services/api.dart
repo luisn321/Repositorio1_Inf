@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 
-const String API_BASE_URL = 'https://repositorio1-inf.onrender.com/api'; 
+const String API_BASE_URL = 'https://repositorio1-inf-tnbs.onrender.com/api';
 
 
 class ApiService {

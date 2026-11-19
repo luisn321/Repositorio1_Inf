@@ -9,7 +9,7 @@ import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 
 /// Servicio para manejar autenticación (login y registro)
 class ServicioAutenticacion {
-  static const String _urlBase = 'https://repositorio1-inf.onrender.com/api/auth';
+  static const String _urlBase = 'https://repositorio1-inf-tnbs.onrender.com/api/auth';
 
   final _almacenamientoSeguro = AlmacenamientoSeguroServicio();
 

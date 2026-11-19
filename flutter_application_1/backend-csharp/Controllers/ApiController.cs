@@ -34,38 +34,6 @@ namespace ServitecAPI.Controllers
     }
 
     [ApiController]
-    [Route("api/services")]
-    public class ServicesController : ControllerBase
-    {
-        private readonly DatabaseService _db;
-
-        public ServicesController(DatabaseService db)
-        {
-            _db = db;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetServices()
-        {
-            try
-            {
-                var results = await _db.ExecuteQueryAsync("SELECT id_servicio, nombre FROM servicios ORDER BY nombre");
-                var services = results.Select(r => new
-                {
-                    id_servicio = r["id_servicio"],
-                    nombre = r["nombre"]
-                }).ToList();
-
-                return Ok(services);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-    }
-
-    [ApiController]
     [Route("api/clients")]
     public class ClientsController : ControllerBase
     {

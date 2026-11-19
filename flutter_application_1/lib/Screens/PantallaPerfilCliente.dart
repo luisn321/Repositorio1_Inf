@@ -86,7 +86,7 @@ class _PantallaPerfilClienteState extends State<PantallaPerfilCliente>
       final token = await _servicio.obtenerToken();
       if (token != null) {
         final respuesta = await http.get(
-          Uri.parse('https://repositorio1-inf.onrender.com/api/auth/profile'),
+          Uri.parse('https://repositorio1-inf-tnbs.onrender.com/api/auth/profile'),
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',

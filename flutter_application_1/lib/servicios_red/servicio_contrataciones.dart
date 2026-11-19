@@ -5,7 +5,7 @@ import '../modelos/contratacion_modelo.dart';
 import '../modelos/calificacion_modelo.dart';
 import '../almacenamiento/almacenamiento_seguro_servicio.dart';
 
-const String _urlBase = 'https://repositorio1-inf.onrender.com/api';
+const String _urlBase = 'https://repositorio1-inf-tnbs.onrender.com/api';
 
 class ServicioContrataciones {
   final AlmacenamientoSeguroServicio _almacenamiento =

@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 
 class ServicioImagenes {
-  static const String _baseUrl = 'https://repositorio1-inf.onrender.com/api/upload'; // URL para Android Emulator
+  static const String _baseUrl = 'https://repositorio1-inf-tnbs.onrender.com/api/upload'; // URL para Android Emulator
   
   final ImagePicker _picker = ImagePicker();
 
